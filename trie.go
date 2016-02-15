@@ -22,6 +22,12 @@ type TrieNode struct {
 
 type TrieResult int
 
+// Process goes through the input string character by character and return the
+// ID of the word in the SymbolTable should the input is a word of the
+// SymbolTable, or a NotFound signal if not.
+//
+// Depending on the flag, the receiver Trie might or might not get updated
+// during the process.
 func (t *TrieNode) Process(text string, flag FlagVar) (rst TrieResult, err error) {
 
 	for i, l := 0, len(text); i < l; i++ {
@@ -34,6 +40,9 @@ func (t *TrieNode) Process(text string, flag FlagVar) (rst TrieResult, err error
 	return
 }
 
+// ProcessIndentifier process the input text string return the filled Trie
+// based SymbolTable.
+// BUG(n): fix the signature
 func ProcessIdentifier(text string, flag FlagVar) (rst TrieResult, err error) {
 	trie := NewTrieNode()
 	return trie.Process(text, flag)
