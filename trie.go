@@ -5,13 +5,19 @@ import (
 	"unicode/utf8"
 )
 
+//FlagVar is enum type for flags
 type FlagVar int
 
 const (
+	//Dynamic Trie: New node are added
 	Dynamic FlagVar = iota
+	//Static Trie: No new nodes
 	Static
 )
 
+//NewTrieNode constructs a TrieNode and return the pointer to it.
+//It creates 128 nil pointers and of children nodes and they will occupy 1KB
+//(8bytes * 128)
 func NewTrieNode() *TrieNode {
 	return &TrieNode{
 		Children: make([]*TrieNode, 128, 128),
@@ -20,19 +26,19 @@ func NewTrieNode() *TrieNode {
 	}
 }
 
+//TrieNode states whether it is a finishing state (HasWord) and the index of
+//the word from root to current node inside the symbol table. Each node has a
+//fixed branch bound of 128 children nodes (range of ascii characters)
 type TrieNode struct {
 	Children []*TrieNode
 	HasWord  bool
 	Index    int
 }
 
-// Process goes through the input string character by character and return the
-// ID of the word in the SymbolTable should the input is a word of the
-// SymbolTable, or a NotFound signal if not.
-//
-// Depending on the flag, the receiver Trie might or might not get updated
-// during the process.
-func (s *SymbolTable) Process(text string, flag FlagVar) (rst int, err error) {
+//Process scan the input string character by character, depending on the flag
+//it updates the Trie based SymbolTable data structure and return the index of
+//the input symbol in the SymbolTable when appropiate.
+func (s *SymbolTable) Process(text string, flag FlagVar) (int, error) {
 	l := utf8.RuneCountInString(text)
 	current := s.TrieHead
 
@@ -65,13 +71,6 @@ func (s *SymbolTable) Process(text string, flag FlagVar) (rst int, err error) {
 	return -1, nil
 }
 
-// ProcessIndentifier process the input text string return the filled Trie
-// based SymbolTable.
-// BUG(n): fix the signature
-func ProcessIdentifier(table *SymbolTable, text string, flag FlagVar) (rst int, err error) {
-	return table.Process(text, flag)
-}
-
 func validASCII(t int) bool {
 	if t >= 0 && t < 128 {
 		return true
@@ -79,11 +78,14 @@ func validASCII(t int) bool {
 	return false
 }
 
+//SymbolTable contains a pointer to a Trie and maintains a slice of symbols
 type SymbolTable struct {
 	TrieHead *TrieNode
 	Table    []string
 }
 
+//NewSymbolTable constructs a SymbolTable with a new Trie Head and an empty
+//string slice with 0 length
 func NewSymbolTable() *SymbolTable {
 	return &SymbolTable{
 		TrieHead: NewTrieNode(),
@@ -99,7 +101,8 @@ func (t *TrieNode) set(r rune, n *TrieNode) {
 func (t *TrieNode) has(r rune) (bool, error) {
 	idx := int(r)
 	if !validASCII(idx) {
-		return false, errors.New("while checking nodes, character is not in valid range of ascii")
+		return false, errors.New("while checking nodes, " +
+			"character is not in valid range of ascii")
 	}
 	ret := t.Children[idx] != nil
 	return ret, nil

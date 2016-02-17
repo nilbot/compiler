@@ -7,8 +7,7 @@ import (
 func TestProcessIdentifier(t *testing.T) {
 	table := NewSymbolTable()
 	for idx, testcase := range ProcessIdentifierTestSet {
-		output, err := ProcessIdentifier(table, testcase.Identifier,
-			testcase.Flag)
+		output, err := table.Process(testcase.Identifier, testcase.Flag)
 		if err != nil {
 			t.Errorf("Error when processing identifiers, "+
 				"testcase number %v, input: %v, error msg: %v",
