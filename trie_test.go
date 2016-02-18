@@ -43,12 +43,13 @@ func TestSymbolTablePointer(t *testing.T) {
 	}
 }
 
+var tests = getMemoryBenchmarkTests()
+
 func BenchmarkMemoryFootprintSymbolTable(b *testing.B) {
-	b.ReportAllocs()
 	TheTrie := NewSymbolTable()
-	tests := getMemoryBenchmarkTests()
 	b.Logf("testsuite of length %d loaded...\n", len(tests))
 	for _, t := range tests {
 		TheTrie.Process(t.Input, Dynamic)
 	}
+	b.Logf("built %d words in symbol table.\n", len(TheTrie.Table))
 }

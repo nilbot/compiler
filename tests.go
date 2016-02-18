@@ -36,12 +36,14 @@ func getMemoryBenchmarkTests() []struct {
 		LengthOfInput bool
 	}
 	for _, l := range lines {
-		rst = append(rst, struct {
-			Input         string
-			LengthOfInput bool
-		}{
-			l, true, // TODO(n) support negative cases
-		})
+		if l != "" {
+			rst = append(rst, struct {
+				Input         string
+				LengthOfInput bool
+			}{
+				l, true, // TODO(n) support negative cases
+			})
+		}
 	}
 	return rst
 }
