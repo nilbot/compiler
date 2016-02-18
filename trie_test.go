@@ -6,7 +6,7 @@ import (
 
 func TestProcessIdentifier(t *testing.T) {
 	table := NewSymbolTable()
-	for idx, testcase := range ProcessIdentifierTestSet {
+	for idx, testcase := range TrieTestSuite {
 		output, err := table.Process(testcase.Identifier, testcase.Flag)
 		if err != nil {
 			t.Errorf("Error when processing identifiers, "+
@@ -21,7 +21,7 @@ func TestProcessIdentifier(t *testing.T) {
 	}
 }
 
-var ProcessIdentifierTestSet = []struct {
+var TrieTestSuite = []struct {
 	Identifier string
 	Flag       FlagVar
 	Expected   int
@@ -40,5 +40,15 @@ func TestSymbolTablePointer(t *testing.T) {
 		t.Errorf("character %q is not valid", 'z')
 	} else if !yes {
 		t.Errorf("expected Yes but got %v", yes)
+	}
+}
+
+func BenchmarkMemoryFootprintSymbolTable(b *testing.B) {
+	b.ReportAllocs()
+	TheTrie := NewSymbolTable()
+	tests := getMemoryBenchmarkTests()
+	b.Logf("testsuite of length %d loaded...\n", len(tests))
+	for _, t := range tests {
+		TheTrie.Process(t.Input, Dynamic)
 	}
 }

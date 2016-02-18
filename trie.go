@@ -17,7 +17,7 @@ const (
 
 //NewTrieNode constructs a TrieNode and return the pointer to it.
 //It creates 128 nil pointers and of children nodes and they will occupy 1KB
-//(8bytes * 128)
+//(8 bytes * 128)
 func NewTrieNode() *TrieNode {
 	return &TrieNode{
 		Children: make([]*TrieNode, 128, 128),
