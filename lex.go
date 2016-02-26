@@ -162,7 +162,6 @@ func startState(l *Lexer) StateFunction {
 		// if reaches here, error
 		l.Emit(Token{TokenError, l.StartPosition,
 			fmt.Sprintf("no matching state for rune %q", r)})
-		l.Ignore()
 	}
 	// reached EOF
 	return nil
