@@ -93,6 +93,31 @@ var OfficialTests = []struct {
 			{TokenIdentifier, 40 - 17, "10"},
 		},
 	},
+	{
+		input7,
+		[]Token{
+			{TokenInteger, 0, "888"},
+			{TokenIdentifier, 21 - 17, "8"},
+			{TokenIdentifier, 24 - 17, "9"},
+			{TokenIdentifier, 30 - 17, "10"},
+			{TokenIdentifier, 33 - 17, "11"},
+			{TokenInteger, 37 - 17, "-1"},
+			{TokenIdentifier, 43 - 17, "8"},
+			{TokenText, 46 - 17, "not ok"},
+		},
+	},
+	{
+		input8,
+		[]Token{
+			{TokenIdentifier, 17 - 17, "1"},
+			{TokenIdentifier, 23 - 17, "-1"},
+			{TokenIdentifier, 26 - 17, "0"},
+			{TokenIdentifier, 33 - 17, "-1"},
+			{TokenIdentifier, 39 - 17, "-1"},
+			{TokenIdentifier, 42 - 17, "-1"},
+			{TokenIdentifier, 44 - 17, "-1"},
+		},
+	},
 }
 
 func setupBarebone(t *testing.T) {
