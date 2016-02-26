@@ -42,7 +42,7 @@ func getMemoryBenchmarkTests() []struct {
 	Input         string
 	LengthOfInput bool
 } {
-	content, err := ioutil.ReadFile("words.test")
+	content, err := ioutil.ReadFile("report.tex")
 	if err != nil {
 		return memoryBenchmarkTest
 	}
@@ -59,6 +59,32 @@ func getMemoryBenchmarkTests() []struct {
 			}{
 				l, true, // TODO(n) support negative cases
 			})
+		}
+	}
+	return rst
+}
+
+func generateFromDataset() []string {
+	var rst []string
+	content, err := ioutil.ReadFile("words.test")
+	if err != nil {
+		for _, v := range memoryBenchmarkTest {
+			s := ""
+			for i := 0; i < 10; i++ {
+				s += v.Input
+			}
+			rst = append(rst, s)
+		}
+		return rst
+	}
+	l := len(content)
+	apiece := l / 10
+	for s := 0; s < l; s += apiece {
+		offset := s + apiece
+		if offset < l {
+			rst = append(rst, string(content[s:offset]))
+		} else {
+			rst = append(rst, string(content[s:]))
 		}
 	}
 	return rst
