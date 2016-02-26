@@ -1,7 +1,6 @@
 package compiler
 
 import (
-	"log"
 	"strconv"
 	"strings"
 	"testing"
@@ -118,7 +117,7 @@ func (l *Lexer) legalRun(t *testing.T, keywords []string) []int {
 		}
 		i, e := strconv.ParseInt(token.V, 10, 0)
 		if e != nil {
-			log.Printf("not a int, %v\n", token)
+			t.Errorf("not a int, %v\n", token)
 		}
 		rst = append(rst, int(i))
 
@@ -130,7 +129,7 @@ func collect(input string) (rst []Token) {
 	l := NewLexer(input)
 	for {
 		token := l.ConsumeToken()
-		if token.T == TokenError {
+		if token.T == TokenError && token.V == "" {
 			l.Flush()
 			break
 		}

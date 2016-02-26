@@ -160,7 +160,9 @@ func startState(l *Lexer) StateFunction {
 			return lexIdentifier
 		}
 		// if reaches here, error
-		return l.Errorf("no matching state for rune %q", r)
+		l.Emit(Token{TokenError, l.StartPosition,
+			fmt.Sprintf("no matching state for rune %q", r)})
+		l.Ignore()
 	}
 	// reached EOF
 	return nil
@@ -213,7 +215,7 @@ func lexIdentifier(l *Lexer) StateFunction {
 	if e != nil {
 		log.Fatalf("Trie reports error: %v", e)
 	}
-	l.Emit(Token{T: TokenIdentifier, P: l.StartPosition, V: fmt.Sprintf("%d", v)})
+	l.Emit(Token{TokenIdentifier, l.StartPosition, fmt.Sprintf("%d", v)})
 	return startState
 }
 
@@ -228,7 +230,7 @@ func lexQuotedText(l *Lexer) StateFunction {
 		}
 		if r == EscapeRune {
 			//escape charactor, advancing 1 rune
-			escapes = append(escapes, l.CurrentPosition)
+			escapes = append(escapes, l.CurrentPosition-1)
 			l.Next()
 			continue
 		}
@@ -238,8 +240,10 @@ func lexQuotedText(l *Lexer) StateFunction {
 			return startState
 		}
 	}
-	return l.Errorf("not matched \" found for string token, position %d",
-		l.CurrentPosition)
+	l.Emit(Token{TokenError, l.StartPosition,
+		fmt.Sprintf("not matched \" found for string token, position %d",
+			l.CurrentPosition-2)})
+	return startState
 }
 
 func textToken(l *Lexer, e []int) Token {

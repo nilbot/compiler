@@ -1,9 +1,6 @@
 package compiler
 
-import (
-	"errors"
-	"unicode/utf8"
-)
+import "errors"
 
 //FlagVar is enum type for flags
 type FlagVar int
@@ -39,21 +36,16 @@ type TrieNode struct {
 //it updates the Trie based SymbolTable data structure and return the index of
 //the input symbol in the SymbolTable when appropiate.
 func (s *SymbolTable) Process(text string, flag FlagVar) (int, error) {
-	l := utf8.RuneCountInString(text)
 	current := s.TrieHead
-
-	for i, r := range text {
-		if hasThisChildNode, err := current.has(r); err != nil {
+	for _, r := range text {
+		haz, err := current.has(r)
+		if err != nil {
 			return -1, err // crash here? or recover?
-		} else if !hasThisChildNode {
+		}
+		if !haz {
 			switch flag {
 			case Dynamic:
 				node := NewTrieNode()
-				if i == l-1 {
-					node.HasWord = true
-					node.Index = len(s.Table)
-					s.Table = append(s.Table, text)
-				}
 				current.set(r, node)
 				current = node
 			case Static:
@@ -65,9 +57,17 @@ func (s *SymbolTable) Process(text string, flag FlagVar) (int, error) {
 			current = current.get(r)
 		}
 	}
+	// reached eof; if dynamic then assign word
+	if !current.HasWord && flag == Dynamic {
+		current.HasWord = true
+		current.Index = len(s.Table)
+		s.Table = append(s.Table, text)
+		return current.Index, nil
+	}
 	if current.HasWord {
 		return current.Index, nil
 	}
+	// reached eof, no word && flag = static
 	return -1, nil
 }
 

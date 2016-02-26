@@ -118,6 +118,22 @@ var OfficialTests = []struct {
 			{TokenIdentifier, 44 - 17, "-1"},
 		},
 	},
+	{
+		input9,
+		[]Token{
+			{TokenIdentifier, 17 - 17, "8"},
+			{TokenIdentifier, 22 - 17, "9"},
+			{TokenError, 26 - 17, "no matching state for rune '~'"},
+			{TokenIdentifier, 28 - 17, "10"},
+			{TokenIdentifier, 35 - 17, "11"},
+			{TokenIdentifier, 38 - 17, "12"},
+			{TokenIdentifier, 40 - 17, "13"},
+			{TokenError, 46 - 17, "no matching state for rune '?'"},
+			{TokenText, 48 - 17, "Here And Th~~~ere"},
+			{TokenIdentifier, 73 - 17, "14"},
+			{TokenError, 77 - 17, "not matched \" found for string token, position 71"},
+		},
+	},
 }
 
 func setupBarebone(t *testing.T) {
@@ -140,11 +156,27 @@ func TestParseLegalKeywords(t *testing.T) {
 func TestLexer(t *testing.T) {
 	for id, testcase := range OfficialTests {
 		outputs := collect(testcase.Input)
+		e := 0
 		for tokenID, token := range outputs {
 			if token.P != testcase.Expected[tokenID].P ||
 				token.T != testcase.Expected[tokenID].T ||
 				token.V != testcase.Expected[tokenID].V {
-				t.Errorf("discrepency in test %d id %d! expected:%v got %v", id, tokenID, testcase.Expected[tokenID], token)
+				if tokenID+1 < len(testcase.Expected) {
+					e = tokenID + 1
+				}
+				if e > tokenID {
+					t.Errorf("error in set %d id %d! \n%v\n expected %v got %v",
+						id,
+						tokenID,
+						testcase.Input[testcase.Expected[tokenID].P:testcase.Expected[e].P],
+						testcase.Expected[tokenID], token)
+				} else {
+					t.Errorf("error in set %d id %d! \n%v\n expected %v got %v",
+						id,
+						tokenID,
+						testcase.Input[testcase.Expected[tokenID].P:],
+						testcase.Expected[tokenID], token)
+				}
 			}
 		}
 	}
