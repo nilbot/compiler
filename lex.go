@@ -219,7 +219,6 @@ func lexIdentifier(l *Lexer) StateFunction {
 	return startState
 }
 
-// BUG(n) test this properly against quoted text objects
 func lexQuotedText(l *Lexer) StateFunction {
 	var escapes []int // array of escape charactor indices
 	for {
