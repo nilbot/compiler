@@ -54,6 +54,22 @@ var OfficialTests = []struct {
 			{TokenIdentifier, 39, "12"},
 		},
 	},
+	{
+		input4,
+		[]Token{
+			{TokenIdentifier, 0, "8"},
+			{TokenIdentifier, 5, "9"},
+			{TokenIdentifier, 14, "-1"},
+			{TokenIdentifier, 24, "10"},
+			{TokenLeftParenthesis, 44 - 17, "0"},
+			{TokenInteger, 45 - 17, "12"},
+			{TokenIdentifier, 48 - 17, "11"},
+			{TokenIdentifier, 51 - 17, "12"},
+			{TokenRightParenthesis, 55 - 17, "0"},
+			{TokenIdentifier, 57 - 17, "13"},
+			{TokenIdentifier, 60 - 17, "14"},
+		},
+	},
 }
 
 func setupBarebone(t *testing.T) {
