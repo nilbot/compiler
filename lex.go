@@ -244,7 +244,7 @@ func lexQuotedText(l *Lexer) StateFunction {
 
 func textToken(l *Lexer, e []int) Token {
 	value := ""
-	curr := l.StartPosition
+	curr := l.StartPosition + 1
 	for _, idx := range e {
 		if idx >= l.CurrentPosition {
 			// panic because it should never happen

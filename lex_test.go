@@ -70,6 +70,29 @@ var OfficialTests = []struct {
 			{TokenIdentifier, 60 - 17, "14"},
 		},
 	},
+	{
+		input5,
+		[]Token{
+			{TokenIdentifier, 0, "8"},
+			{TokenIdentifier, 23 - 17, "9"},
+			{TokenText, 27 - 17, "strings of things"},
+			{TokenIdentifier, 47 - 17, "10"},
+			{TokenIdentifier, 51 - 17, "8"},
+			{TokenIdentifier, 57 - 17, "9"},
+			{TokenText, 61 - 17, "chickens\nwith\nwings"},
+		},
+	},
+	{
+		input6,
+		[]Token{
+			{TokenIdentifier, 17 - 17, "8"},
+			{TokenIdentifier, 22 - 17, "9"},
+			{TokenIdentifier, 26 - 17, "8"},
+			{TokenIdentifier, 31 - 17, "9"},
+			{TokenIdentifier, 35 - 17, "8"},
+			{TokenIdentifier, 40 - 17, "10"},
+		},
+	},
 }
 
 func setupBarebone(t *testing.T) {
