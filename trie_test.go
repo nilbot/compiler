@@ -13,7 +13,7 @@ func TestProcessIdentifier(t *testing.T) {
 				"testcase number %v, input: %v, error msg: %v",
 				idx, testcase.Identifier, err)
 		}
-		if !equals(output, testcase.Expected) {
+		if output != testcase.Expected {
 			t.Errorf("Result mismatch for testcase %v, "+
 				"input: %v, expected: %v, but got output: %v",
 				idx, testcase.Identifier, testcase.Expected, output)

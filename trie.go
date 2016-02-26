@@ -9,10 +9,10 @@ import (
 type FlagVar int
 
 const (
-	//Dynamic Trie: New node are added
-	Dynamic FlagVar = iota
 	//Static Trie: No new nodes
-	Static
+	Static FlagVar = iota
+	//Dynamic Trie: New node are added
+	Dynamic
 )
 
 //NewTrieNode constructs a TrieNode and return the pointer to it.
