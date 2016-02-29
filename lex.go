@@ -94,6 +94,20 @@ func (l *Lexer) Errorf(format string, args ...interface{}) StateFunction {
 	return nil
 }
 
+// ConsumeToken returns the next item from the input.
+// Called by the parser, not in the lexing goroutine.
+func (l *Lexer) ConsumeToken() Token {
+	token := <-l.Tokens
+	l.LastPosition = token.P
+	return token
+}
+
+// Flush flushes all tokens in the channel
+func (l *Lexer) Flush() {
+	for range l.Tokens {
+	}
+}
+
 // Token presents a token or text string returned from the scanner.
 type Token struct {
 	T tokenType // the type of this Token
@@ -114,6 +128,33 @@ const (
 	TokenSemicolon                         // ;
 	TokenText                              // string constant
 )
+
+// String returns the string representation of the Token
+func (t *Token) String() string {
+	rst := ""
+	switch t.T {
+	case TokenError:
+		rst += "[Error] "
+	case TokenInteger:
+		rst += "[Int] "
+	case TokenKeyword:
+		rst += "[Id] "
+	case TokenIdentifier:
+		rst += "[Id] "
+	case TokenLeftParenthesis:
+		rst += "[Lpar] "
+	case TokenRightParenthesis:
+		rst += "[Rpar] "
+	case TokenSemicolon:
+		rst += "[;] "
+	case TokenText:
+		rst += "[String] "
+	default:
+		return ""
+	}
+	rst += t.V
+	return rst
+}
 
 // StateFunction is a function pointer definition, to replace switch-case
 // implementation of the state machine.

@@ -107,20 +107,6 @@ func lexLegalWordsTester(t *testing.T) *Lexer {
 	return pointer
 }
 
-// ConsumeToken returns the next item from the input.
-// Called by the parser, not in the lexing goroutine.
-func (l *Lexer) ConsumeToken() Token {
-	token := <-l.Tokens
-	l.LastPosition = token.P
-	return token
-}
-
-// Flush flushes all tokens in the channel
-func (l *Lexer) Flush() {
-	for range l.Tokens {
-	}
-}
-
 func (l *Lexer) injectInput(in string) {
 	l.In = in
 }

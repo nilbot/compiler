@@ -186,6 +186,15 @@ func TestLexer(t *testing.T) {
 	}
 }
 
+func TestOutput(t *testing.T) {
+	for i, test := range OfficialTests {
+		t.Logf("\n----\nTestcase %d : %v\n----", i, test.Input)
+		for _, v := range collect(test.Input) {
+			t.Logf("%v\n", v.String())
+		}
+	}
+}
+
 func BenchmarkLexingShortSequences(b *testing.B) {
 	for i, test := range OfficialTests {
 		outputs := collect(test.Input)
