@@ -1,3 +1,4 @@
+# Author: Ersi Ni
 TEXPAD_BUILD_DIR=.texpadtmp/
 GODOC_OBJ=godoc.html
 GODOCPDF_OBJ=godoc.pdf

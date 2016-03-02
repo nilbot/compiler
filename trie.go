@@ -1,5 +1,7 @@
 package compiler
 
+// Author: Ersi Ni
+
 import "errors"
 
 //FlagVar is enum type for flags

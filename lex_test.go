@@ -1,5 +1,7 @@
 package compiler
 
+// Author: Ersi Ni
+
 import (
 	"unicode/utf8"
 
@@ -198,7 +200,8 @@ func TestOutput(t *testing.T) {
 func BenchmarkLexingShortSequences(b *testing.B) {
 	for i, test := range OfficialTests {
 		outputs := collect(test.Input)
-		b.Logf("%d tokens for long-test %d of length %d", len(outputs), i, utf8.RuneCountInString(test.Input))
+		b.Logf("%d tokens for long-test %d of length %d",
+			len(outputs), i, utf8.RuneCountInString(test.Input))
 		ec := 0
 		for _, t := range outputs {
 			if t.T == TokenError && t.V != "" {
@@ -211,7 +214,8 @@ func BenchmarkLexingShortSequences(b *testing.B) {
 func BenchmarkLexingLongSequences(b *testing.B) {
 	for i, test := range LongSequences {
 		outputs := collect(test)
-		b.Logf("%d tokens for long-test %d of length %d", len(outputs), i, utf8.RuneCountInString(test))
+		b.Logf("%d tokens for long-test %d of length %d",
+			len(outputs), i, utf8.RuneCountInString(test))
 		ec := 0
 		for _, t := range outputs {
 			if t.T == TokenError && t.V != "" {

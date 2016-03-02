@@ -1,8 +1,9 @@
+/* // Author: Ersi Ni */
 UC [A-Z]
 LC [a-z]
 DIGIT [0-9]
 WS 	[\n\t ]
-ILLEGAL [^a-zA-Z\d\s;\(\)] 
+ILLEGAL [^a-zA-Z\d\s;\(\)]
 
 %{
 	int testcase;
@@ -18,7 +19,8 @@ ILLEGAL [^a-zA-Z\d\s;\(\)]
 
 %%
 			/* cosmetic */
-"//"			{printf("====\nTestCase %d\n====\n",++testcase);root_node = create_node();symboltable=8;}
+"//"			{printf("====\nTestCase %d\n====\n",++testcase);
+			root_node = create_node();symboltable=8;}
 			/* whitespaces */
 {WS}*
 			/* integers */
@@ -34,7 +36,7 @@ ILLEGAL [^a-zA-Z\d\s;\(\)]
 <STRING_EOF>\n
 <STRING_EOF><<EOF>>	{printf("[Error] 0\n");return 0;}
 
-"\""((~\")*|(\n|\r)*|[^"]*)*"\""	{printf("[String] %s\n",escape(yytext));}
+"\""((~\")*|(\n|\r)*|[^"]*)*"\""    {printf("[String] %s\n",escape(yytext));}
 			/* error */
 {ILLEGAL}	{printf("[Error] 0\n");}
 %%
@@ -82,7 +84,7 @@ int which_keywords(const char *i) {
 	return 6;
 	if(strcmp(i, "Try") == 0)
 	return 7;
-	
+
 	return -1;
 }
 

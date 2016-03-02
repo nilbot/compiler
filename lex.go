@@ -1,5 +1,7 @@
 package compiler
 
+// Author: Ersi Ni
+
 import (
 	"fmt"
 	"log"
