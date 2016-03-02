@@ -65,15 +65,12 @@ A Go Implementation}% Force line breaks with \\
              %  but any date may be explicitly specified
 
 \begin{abstract}
-This Compiler implementation is the result of open specification of courseware assignments for module Compiler Construction COMP30330 at UCD CSI, that any programming language can be used as long as it implements the requirements. The Compiler is implemented after chronological order the requirements from the courseware were released.
-\begin{enumerate}[$\cdot$]
-	\item Trie based Symbol table data structure
+This Compiler implementation is the result of open specification of courseware assignments for module Compiler Construction COMP30330 at UCD CSI, that any programming language can be used as long as it implements the requirements. This report is organized in order of following topics:
+\begin{enumerate}[$\bullet$]
+	\item Trie based Symbol Table 
 	\item Lexer
-\end{enumerate}
-To aid the testing and implementation, these components were also introduced:
-\begin{enumerate}[$\cdot$]
-	\item helper utilities
-	\item test and benchmarking code
+	\item Flex
+	\item Tests and Benchmarking
 \end{enumerate}
 \end{abstract}
 
@@ -82,19 +79,18 @@ To aid the testing and implementation, these components were also introduced:
 
 \begin{quotation}
 The main reason of choosing Go to write the compiler, especially the lexer was
-concurrency support and syntax support for function pointers.   \footnote{C can do all
-this too, minus the practicality of enormous concurrency housekeeping}
+concurrency support and syntax support for function pointers.   \footnote{\texttt{C} can do all these too, less the cost of hand-writing enormous amount of code for concurrency housekeeping with virtually no quality control.}
 
 Rob Pike has given a splendid talk about writing template system using Go,
 particularly the Lexical Scanning, \url{https://www.youtube.com/watch?v=HxaD_trXwRE}
 that talk has planted deep root for my implementation.
 \end{quotation}
 
-\section{\label{sec:level1}Data Structures}
+\section{Data Structures}
 
 
 
-\subsection{\label{sec:level2}Trie based Symbol Table}
+\subsection{Trie based Symbol Table}
 
 The Symbol table is a lookup table for known Symbols, or identifiers. To
 construct this lookup table a prefix tree (Trie) data structure is used to
@@ -109,7 +105,7 @@ The Trie stores information about the character and their meaning along the
 path from the root: whether it completes word to form an Identifier or not;
 and if it does, return the index of the word in the Symbol table.
 
-\subsubsection{\label{sec:level3}Notes and Caveats}
+\subsubsection{Notes and Caveats}
 The requirement of the module asks for handling characters range within ASCII
 table. However the notion of "characters" is ambiguous in data presentation
 level: depending on encoding scheme the data input chooses to adopt, a
@@ -125,18 +121,18 @@ they are not in the ASCII range anyway.
 See \url{https://en.wikipedia.org/wiki/Unicode_equivalence}
 for background technicalities of this mess.
 
+\subsubsection{Implementation and Performance}
+Retrospectively, the \texttt{trie} could have been set with a bound of 52 children per node instead of 128 children to reduce spatial complexity, because for the targeted language we will only deal with words consist of alphabet letters.
+Nevertheless, the break-down of performance in regard of CPU profiling and memory footprint benchmarks will be covered in details in later chapters. It is worth noting that despite with mentioned memory waste, full concurrency housekeeping and garbage collection in background the \texttt{trie} performs on par with similar \texttt{C} implementation, yielding 17 seconds running time for processing 37 million words with stdout logs and aggregation statistics.\ref{bench:trie} \footnotesize{English Blog Corpus from HC Corpus \url{http://www.corpora.heliohost.org/statistics.html#EnglishUSCorpus}}
 \section{Lexer}
 
 
 \subsection{State Machine with Function Pointer}
 
-The iniatialized lexer will start running with inital state and keep updating
-itself: the state function does whatever it's supposed to do within the state,
-triggers transition upon fulfilled condition and return the next state as a
-function pointer, which is to be re-assigned to the same lexer.state variable.
+Once initialized, a lexer will start running with start state and keep updating
+itself: the state variable is a function pointer pointing to current state's execution function, whose function body contains routines on how to process specifically the current state and handles state changes. Upon triggering state transition, the function returns a new function pointer, which points to the intended new state. Thus the state variable is re-assigned to the new state.
 
-The routine halts if the state machine reaches an accepting state, meaning 
-the next state is \textbf{nil}.
+The routine halts if the state machine reaches an accepting state or error, both mean that the return state is a \textbf{nil} pointer. 
 
 \newpage
 
@@ -147,6 +143,7 @@ func (receiver *Lexer) Run() {
 	for receiver.State = startState; receiver.State != nil; {
 		receiver.State = receiver.State(receiver)
 	}
+	close(receiver.Tokens) // finish by closing channel
 }
 \end{lstlisting}
 \end{widetext}
@@ -196,7 +193,7 @@ There are details omitted in this diagram, mainly due to space constraints, such
 as escaping with character {\large \texttildelow}, the definition of ``delim'' including
 whitespace and state transition leading characters.
 
-\subsubsection{Emit Tokens}
+\subsection{Emit Tokens}
 
 Upon successful lexing a token, the lexer emits this token to its message
 channel, this channel can be consumed by a potential parser, a logging / print
@@ -226,9 +223,86 @@ transition between $\mathtt{<id>}$ and $\mathtt{<int>}$ is also deemed as delimi
 $\mathtt{<rpar>}$ and $\mathtt{<semicolon>}$ are both delimiter and tokens.
 The error token will effectively terminate consumption from client.
 
-\subsubsection{}
+\subsection{Lexing Integers}
 
+To avoid overflowing the parsing of input integer is performed character by character, such that as soon as already parsed number threatens the exceeding of \textit{max\_int} by either advancing by 10 fold, or with the addition of next digit, the parsing will ignore further digits and return -1. This avoids the pitfall of overflowing integer should the input integer string is too large.\ref{lex-integer}
+\begin{widetext}
+\begin{lstlisting}[label=lex-integer,caption=lexInteger]
+var rst int
+const maxint = 65535
+for {
+	r := l.Next()
+	if r == EOF {
+		break
+	}
+	if i := int(r - '0'); i >= 0 && i <= 9 {
+		if rst <= 6553 && rst > -1 {
+			rst *= 10
+			if maxint-rst < i {
+				rst = -1
+			} else {
+				rst += i
+			}
+		} else {
+			rst = -1
+			// not break, instead skip until transition
+		}
+	} else {
+		// potentially a state transition here
+		l.Backup()
+		break
+	}
+}	
+\end{lstlisting}
+\end{widetext}
 
+\subsection{Escaping special character}
+The target language defined tilde $\thicksim$ as escape character. To realize the escape logic, an efficient way is to use a second pointer and output the extra escaped string in the same pass.
+
+\section{Flex}
+Implementing the same lexer using flex is very similar to the Go implementation but much simpler in some aspects. In fact I ported the Go implementation directly to C with virtually no syntax modification. The difference and difficulty of writing flex rules is to adhere to its state matching ordering logic. Because of flex's \texttt{regex} parsing is from top to down, some backtracking logic must be expressed using state or condition, for example the matching of EOF while trying to find the end quote must be put in front of the string rule (for the un-matched the string object to fallback to).
+
+\section{Test and benchmark results}
+Writing good tests is both important quality benchmark and tremendous helper for implementing design using language such as Go: it's a good mix of both top down and bottom up practice, and couples with Go's expressiveness one can write complex programs without a debugger. Thanks to the testing facilities available as standard library, testing and benchmarking is very straight-forward. Even automatically generating complex profiling diagrams would not require much more effort.
+While all test and benchmark results are attached in appendix, I would like briefly give an overview of those in this section.
+
+\subsection{Test result for Go Lexer and Flex}
+The input examples are provided by lecturer, originally labeled as \textbf{input[1-9].txt}. Both Go Lexer and Flex are tested against these example inputs. Further there are few unit tests for Go implementation, all Go tests are to be found in source code listing labeled with \textbf{xxx\_test.go}
+The Go test result are embodied with simple benchmark timer and heading indicating individual test methods and its result, therefore it's more verbose. Readers should seek to heading after \textbf{TestOutput} to examine the result. The Flex result is just a simple heading followed by result. The format is different but the content is easily comparable.
+
+\subsection{Performance Benchmark and Profiling the Lexer}
+With the help of Go testing framework I performed benchmark on both\textbf{(*SymbolTable).Process} and \textbf{(*Lexer).Run}, with short and long sequence test-cases. While due to time constraints I don't have enough data to do vertical comparison between the Go implementation and an proper C implementation, the dumbed version of the C code however did finished processing 37 million words under 11 seconds. Further CPU profiling \footnote{due to the need of archiving certain degree of automation I chose to use buffered IO to read input into memory instead of reading off pipe as stream, there is some extra overhead in terms of loading time.} shows that while \textbf{(*Lexer).Run} occupies roughly 40\% of the CPU time, the major cumulative processing landed in channel communications. 
+
+\section{Appendix Overview}
+\begin{enumerate}[$\surd$]
+	\item generated code documentation
+	\begin{enumerate}[$\blacktriangleright$]
+	\item compiler.pdf	
+	\end{enumerate}
+	\item source code listing: Go Compiler 
+	\begin{enumerate}[$\blacktriangleright$]
+	\item trie.go; trie\_test.go
+	\item lex.go; lex\_test.go
+	\item tests.go; doc.go
+	\end{enumerate}
+	\item source code listing: flex
+	\begin{enumerate}[$\blacktriangleright$]
+	\item compiler.flex
+	\item symboltable.h
+	\end{enumerate}
+	\item test result / output
+	\begin{enumerate}[$\blacktriangleright$]
+	\item lexer\_out.pdf
+	\item flex\_out.pdf
+	\end{enumerate}
+	\item benchmarks
+	\begin{enumerate}[$\blacktriangleright$]
+	\item bench\_go.pdf
+	\item cpu-long-profile.pdf
+	\end{enumerate}
+\end{enumerate}
+
+\rule{\textwidth}{2pt}
 
 \end{document}
 %
