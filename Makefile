@@ -3,11 +3,11 @@ TEXPAD_BUILD_DIR=.texpadtmp/
 GODOC_OBJ=godoc.html
 GODOCPDF_OBJ=godoc.pdf
 GODOCPDF_FLAG=--dpi=120 --latex-engine=xelatex
-XELATEX_SRC=report.tex
+XELATEX_SRC=latex/lexer_report.tex
 LATEX_OBJS=$(BIBTEX_SRC).out $(BIBTEX_SRC).log $(BIBTEX_SRC).blg $(BIBTEX_SRC).bbl $(BIBTEX_SRC).aux $(BIBTEX_OBJ)
-BIBTEX_SRC=report
-BIBTEX_OBJ=reportNotes.bib
-FINALOUTCOME=cpu.pdf mem.pdf report.pdf coverage.html godoc.html
+BIBTEX_SRC=lexer_report
+BIBTEX_OBJ=lexer_reportNotes.bib
+FINALOUTCOME=cpu.pdf mem.pdf lexer_report.pdf coverage.html godoc.html
 
 test:
 	go test -v -parallel=1
