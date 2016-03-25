@@ -4,7 +4,6 @@ package compiler
 
 import (
 	"strconv"
-	"strings"
 	"testing"
 
 	"io/ioutil"
@@ -26,44 +25,6 @@ func testEqualIntArray(a, b []int) bool {
 		}
 	}
 	return true
-}
-
-var memoryBenchmarkTest = []struct {
-	Input         string
-	LengthOfInput bool
-}{
-	{"Apple", true},
-	{"Banana", true},
-	{"Testing", true},
-	{"Facility", true},
-	{"cAsE", true},
-	{".#/po!@<>", false},
-}
-
-func getMemoryBenchmarkTests() []struct {
-	Input         string
-	LengthOfInput bool
-} {
-	content, err := ioutil.ReadFile("report.tex")
-	if err != nil {
-		return memoryBenchmarkTest
-	}
-	lines := strings.Split(string(content), "\n")
-	var rst []struct {
-		Input         string
-		LengthOfInput bool
-	}
-	for _, l := range lines {
-		if l != "" {
-			rst = append(rst, struct {
-				Input         string
-				LengthOfInput bool
-			}{
-				l, true, // TODO(n) support negative cases
-			})
-		}
-	}
-	return rst
 }
 
 func generateFromDataset() []string {

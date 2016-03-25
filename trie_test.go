@@ -3,6 +3,8 @@ package compiler
 // Author: Ersi Ni
 
 import (
+	"io/ioutil"
+	"strings"
 	"testing"
 )
 
@@ -43,6 +45,44 @@ func TestSymbolTablePointer(t *testing.T) {
 	} else if !yes {
 		t.Errorf("expected Yes but got %v", yes)
 	}
+}
+
+var memoryBenchmarkTest = []struct {
+	Input         string
+	LengthOfInput bool
+}{
+	{"Apple", true},
+	{"Banana", true},
+	{"Testing", true},
+	{"Facility", true},
+	{"cAsE", true},
+	{".#/po!@<>", false},
+}
+
+func getMemoryBenchmarkTests() []struct {
+	Input         string
+	LengthOfInput bool
+} {
+	content, err := ioutil.ReadFile("report.tex")
+	if err != nil {
+		return memoryBenchmarkTest
+	}
+	lines := strings.Split(string(content), "\n")
+	var rst []struct {
+		Input         string
+		LengthOfInput bool
+	}
+	for _, l := range lines {
+		if l != "" {
+			rst = append(rst, struct {
+				Input         string
+				LengthOfInput bool
+			}{
+				l, true, // TODO(n) support negative cases
+			})
+		}
+	}
+	return rst
 }
 
 var tests = getMemoryBenchmarkTests()

@@ -10,9 +10,21 @@ BIBTEX_OBJ=lexer_reportNotes.bib
 FINALOUTCOME=cpu.pdf mem.pdf lexer_report.pdf coverage.html godoc.html
 
 test:
-	go test -v -parallel=1
+	go test -v
 
-godoc:
+uf:
+	go test unionfind.go unionfind_test.go
+
+parser:
+	go test parse.go parse_test.go
+
+st:
+	go test trie.go trie_test.go
+
+lexer:
+	go test lex.go lex_test.go tests.go trie.go trie_test.go
+
+godo:
 	godoc -tabwidth 2 -html . > $(GODOC_OBJ)
 
 report:
