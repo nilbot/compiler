@@ -91,6 +91,7 @@ func buildLREProduction() map[SymbolID][]Production {
 		{[]SymbolID{trueConst}},
 		{[]SymbolID{falseConst}},
 	}
+	rst[Epsilon] = []Production{}
 	return rst
 }
 
@@ -124,15 +125,26 @@ func loadSymbols(sentence string) []Symbol {
 	return rst
 }
 
-func (p *Parser) markFinish() {
-	p.log.Logf("\n==== parsing successful ====\n"+
-		"original input:\n%v\n tried %v; "+
-		"discarded %v; successfully matched %v.\n"+
-		"~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n",
-		p.symbols,
-		p.tried,
-		p.discarded,
-		p.tried-p.discarded)
+func (p *Parser) markFinish(success bool) {
+	if success {
+		p.log.Logf("\n==== parsing successful ====\n"+
+			"original input:\n%v\n tried %v; "+
+			"discarded %v; successfully matched %v.\n"+
+			"~#~#~#~#~#~#~#~#~#~#~#~#~#\n",
+			p.symbols,
+			p.tried,
+			p.discarded,
+			p.tried-p.discarded)
+	} else {
+		p.log.Logf("\n==== parsing ultimately failed ====\n"+
+			"original input:\n%v\n tried %v; "+
+			"discarded %v; successfully matched %v.\n"+
+			"~@~@~@~@~@~@~@~@~@~@~@~@~@\n",
+			p.symbols,
+			p.tried,
+			p.discarded,
+			p.tried-p.discarded)
+	}
 }
 
 func (p *Parser) markMatch(leftHandSide SymbolID, prodIdx, symIdx int,
@@ -164,6 +176,9 @@ func (p *Parser) dfs(lhs SymbolID, startPos int) (match bool, pos int) {
 		return false, -1
 	}
 	if pos == len(p.symbols)-1 && p.symbols[len(p.symbols)-1].ID == End {
+		return true, pos
+	}
+	if lhs == Epsilon {
 		return true, pos
 	}
 	for pIdx, prod := range LREProduction[lhs] {
@@ -222,9 +237,7 @@ func (p *Parser) RunDFS() {
 		p.log.Logf("\n****\nsymbols: %v\n****\n", p.symbols)
 	}
 	success, _ := p.dfs(S, 0)
-	if success {
-		p.markFinish()
-	}
+	p.markFinish(success)
 	// close(p.diagnostics)
 }
 
