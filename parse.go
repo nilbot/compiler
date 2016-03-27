@@ -133,11 +133,6 @@ func (p *Parser) markFinish(success bool) {
 		p.tried,
 		p.discarded,
 		p.tried-p.discarded)
-	// if success {
-	// 	p.log.Logf("~#~#~#~#~#~#~#~#~#~#~#~#~#\n")
-	// } else {
-	// 	p.log.Logf("~@~@~@~@~@~@~@~@~@~@~@~@~@\n")
-	// }
 }
 
 func (p *Parser) markMatch(leftHandSide SymbolID, prodIdx, symIdx int,
