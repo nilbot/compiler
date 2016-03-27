@@ -31,11 +31,11 @@ print_parser_output: clean_parser_output
 	go test parse*.go -v > $(DFS_PARSER_OUTPUT_TXT) && \
 	echo " " >> $(DFS_PARSER_OUTPUT_TXT) && \
 	echo "# of grammatical ones: " >> $(DFS_PARSER_OUTPUT_TXT) && \
-	cat $(DFS_PARSER_OUTPUT_TXT) | grep '~#' | wc -l \
+	cat $(DFS_PARSER_OUTPUT_TXT) | grep ' Gr' | wc -l \
 	>> $(DFS_PARSER_OUTPUT_TXT) && \
 	echo " " >> $(DFS_PARSER_OUTPUT_TXT) && \
 	echo "# of ungrammatical ones: " >> $(DFS_PARSER_OUTPUT_TXT) && \
-	cat $(DFS_PARSER_OUTPUT_TXT) | grep '~@' | wc -l \
+	cat $(DFS_PARSER_OUTPUT_TXT) | grep ' Un' | wc -l \
 	>> $(DFS_PARSER_OUTPUT_TXT)
 
 godo:

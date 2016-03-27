@@ -95,11 +95,6 @@ func buildLREProduction() map[SymbolID][]Production {
 	return rst
 }
 
-// pathinfo contains info for stats of matched/unmatched attempt and when
-// successfully matched, the tree traversal path for the symbol, depth etc.
-type pathinfo struct {
-}
-
 // Parser for one sentence
 type Parser struct {
 	symbols   []Symbol
@@ -107,7 +102,6 @@ type Parser struct {
 	discarded int
 	tried     int
 	log       Logger
-	// diagnostics chan pathinfo
 }
 
 func loadSymbols(sentence string) []Symbol {
@@ -127,46 +121,51 @@ func loadSymbols(sentence string) []Symbol {
 
 func (p *Parser) markFinish(success bool) {
 	if success {
-		p.log.Logf("\n==== parsing successful ====\n"+
-			"original input:\n%v\n tried %v; "+
-			"discarded %v; successfully matched %v.\n"+
-			"~#~#~#~#~#~#~#~#~#~#~#~#~#\n",
-			p.symbols,
-			p.tried,
-			p.discarded,
-			p.tried-p.discarded)
+		p.log.Logf("\n==== Grammatical ====\n")
 	} else {
-		p.log.Logf("\n==== parsing ultimately failed ====\n"+
-			"original input:\n%v\n tried %v; "+
-			"discarded %v; successfully matched %v.\n"+
-			"~@~@~@~@~@~@~@~@~@~@~@~@~@\n",
-			p.symbols,
-			p.tried,
-			p.discarded,
-			p.tried-p.discarded)
+		p.log.Logf("\n=== Ungrammatical ===\n")
 	}
+	p.log.Logf("original input:\n%v\n"+
+		"# of symbols %v;\n"+
+		"tried %v; discarded %v; successfully matched %v.\n",
+		p.symbols,
+		len(p.symbols)-1,
+		p.tried,
+		p.discarded,
+		p.tried-p.discarded)
+	// if success {
+	// 	p.log.Logf("~#~#~#~#~#~#~#~#~#~#~#~#~#\n")
+	// } else {
+	// 	p.log.Logf("~@~@~@~@~@~@~@~@~@~@~@~@~@\n")
+	// }
 }
 
 func (p *Parser) markMatch(leftHandSide SymbolID, prodIdx, symIdx int,
 	rightHandSideCurrentSymbol SymbolID) {
-	p.log.Logf("[partial success]\n symbol %v inside LHS %v\n "+
-		"production index of prods derived from LHS: %v\n"+
-		"symbol index of current prod: %v\n",
-		rightHandSideCurrentSymbol,
-		leftHandSide,
-		prodIdx,
-		symIdx)
+	if p.chatty {
+		p.log.Logf("[partial success]"+
+			"\n symbol %v inside LHS %v\n "+
+			"production index of prods derived from LHS: %v\n"+
+			"symbol index of current prod: %v\n",
+			rightHandSideCurrentSymbol,
+			leftHandSide,
+			prodIdx,
+			symIdx)
+	}
 }
 
 func (p *Parser) missMatch(leftHandSide SymbolID, prodIdx, symIdx int,
 	rightHandSideCurrentSymbol SymbolID) {
-	p.log.Logf("[discard]\n miss matched symbol %v inside LHS %v\n"+
-		"production index of prods derived from LHS: %v\n"+
-		"symbol index of current prod: %v\n",
-		rightHandSideCurrentSymbol,
-		leftHandSide,
-		prodIdx,
-		symIdx)
+	if p.chatty {
+		p.log.Logf("[discard]"+
+			"\n miss matched symbol %v inside LHS %v\n"+
+			"production index of prods derived from LHS: %v\n"+
+			"symbol index of current prod: %v\n",
+			rightHandSideCurrentSymbol,
+			leftHandSide,
+			prodIdx,
+			symIdx)
+	}
 }
 
 func (p *Parser) dfs(lhs SymbolID, startPos int) (match bool, pos int) {
@@ -207,7 +206,6 @@ func (p *Parser) dfs(lhs SymbolID, startPos int) (match bool, pos int) {
 					goto OUTERLOOP_CONTINUE
 				}
 			} else if symbol == End {
-				// p.markFinish()
 				return true, pos
 			}
 			p.log.Errorf("\n!!!\nthere might be error in "+
@@ -221,9 +219,11 @@ func (p *Parser) dfs(lhs SymbolID, startPos int) (match bool, pos int) {
 		pos = startPos // try new prod in rhs rules
 
 	}
-	p.log.Logf("[failed]\n grammar not matched, symbols \n%v\n"+
-		"failed at pos %v\n",
-		p.symbols, pos)
+	if p.chatty {
+		p.log.Logf("[failed]\n grammar not matched, symbols \n%v\n"+
+			"failed at pos %v\n",
+			p.symbols, pos)
+	}
 	return false, -1
 }
 
@@ -233,12 +233,9 @@ func (p *Parser) RunDFS() {
 		p.log.Errorf("symbols input is empty array, this is " +
 			"considered as error\nCheck your input.\n")
 	}
-	if p.chatty {
-		p.log.Logf("\n****\nsymbols: %v\n****\n", p.symbols)
-	}
+
 	success, _ := p.dfs(S, 0)
 	p.markFinish(success)
-	// close(p.diagnostics)
 }
 
 // NewDFSParser construct a parser pointer which runs DFS to parse the input
@@ -247,9 +244,7 @@ func NewDFSParser(syms []Symbol, mylogger Logger, verbosity bool) *Parser {
 		symbols: syms,
 		log:     mylogger,
 		chatty:  verbosity,
-		// diagnostics: make(chan pathinfo),
 	}
-	// go point.RunDFS()
 	return point
 }
 
