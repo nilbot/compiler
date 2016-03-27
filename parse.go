@@ -1,5 +1,10 @@
 package compiler
 
+import (
+	"strconv"
+	"strings"
+)
+
 // Author: Ersi Ni
 
 // SymbolID typedef int for constants
@@ -8,7 +13,7 @@ type SymbolID int
 // Grammar def T and NT, here the tiny spec allows us to use couple numbers to
 // represent them all.
 const (
-	TBegin     SymbolID = iota // ignore 0
+	TBegin     SymbolID = iota // Terminal begin
 	num                        // 0-9
 	id                         // id
 	lb                         // '('
@@ -21,19 +26,17 @@ const (
 	eq                         // '='
 	lt                         // '<'
 	gt                         // '>'
-	TEnd                       // terminal threshold
-
-	NTBegin SymbolID = iota + 50 // ignore 50
-	S                            //sentence start
-	Epsilon                      // empty production
-	BExp                         // expression
-	BExp2                        // Bexp' to eliminate left recursion
-	BTerm                        // (math) term
-	BFactor                      // factor
-	BConst                       // constant
-	NTEnd                        // NT end
-
-	End SymbolID = iota + 99 // sentence end
+	TEnd                       // terminal end
+	NTBegin                    // nonterminal begin
+	S                          //sentence start
+	Epsilon                    // empty production
+	BExp                       // expression
+	BExp2                      // Bexp' to eliminate left recursion
+	BTerm                      // (math) term
+	BFactor                    // factor
+	BConst                     // constant
+	NTEnd                      // nonterminal end
+	End        = 99            // sentence end
 )
 
 // Symbol represent a symbol of ID and attribute value
@@ -47,9 +50,14 @@ type Production struct {
 	RHS []SymbolID // right hand side
 }
 
-// IsTerminal tells if the the symbol is terminal
-func (s SymbolID) IsTerminal() bool {
-	return s < TEnd
+// Terminal tells if the the symbol is terminal
+func (s SymbolID) Terminal() bool {
+	return s < TEnd && s > TBegin
+}
+
+//NonTerminal tells if the symbol is nonterminal
+func (s SymbolID) NonTerminal() bool {
+	return s < NTEnd && s > NTBegin
 }
 
 // LREProduction left recursion eliminated production table
@@ -93,28 +101,143 @@ type pathinfo struct {
 
 // Parser for one sentence
 type Parser struct {
-	inputStream string
-	symbols     []Symbol
-	diagnostics chan pathinfo
+	symbols   []Symbol
+	chatty    bool
+	discarded int
+	tried     int
+	log       Logger
+	// diagnostics chan pathinfo
 }
 
 func loadSymbols(sentence string) []Symbol {
 	var rst []Symbol
+	parts := strings.Fields(sentence)
+	for i := 0; i < len(parts); i += 2 {
+		id, _ := strconv.ParseInt(parts[i], 10, 0)
+		att, _ := strconv.ParseInt(parts[i+1], 10, 0)
+		symbol := Symbol{
+			ID:        SymbolID(id),
+			Attribute: int(att),
+		}
+		rst = append(rst, symbol)
+	}
 	return rst
+}
+
+func (p *Parser) markFinish() {
+	p.log.Logf("\n==== parsing successful ====\n"+
+		"original input:\n%v\n tried %v; "+
+		"discarded %v; successfully matched %v.\n"+
+		"~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n",
+		p.symbols,
+		p.tried,
+		p.discarded,
+		p.tried-p.discarded)
+}
+
+func (p *Parser) markMatch(leftHandSide SymbolID, prodIdx, symIdx int,
+	rightHandSideCurrentSymbol SymbolID) {
+	p.log.Logf("[partial success]\n symbol %v inside LHS %v\n "+
+		"production index of prods derived from LHS: %v\n"+
+		"symbol index of current prod: %v\n",
+		rightHandSideCurrentSymbol,
+		leftHandSide,
+		prodIdx,
+		symIdx)
+}
+
+func (p *Parser) missMatch(leftHandSide SymbolID, prodIdx, symIdx int,
+	rightHandSideCurrentSymbol SymbolID) {
+	p.log.Logf("[discard]\n miss matched symbol %v inside LHS %v\n"+
+		"production index of prods derived from LHS: %v\n"+
+		"symbol index of current prod: %v\n",
+		rightHandSideCurrentSymbol,
+		leftHandSide,
+		prodIdx,
+		symIdx)
+}
+
+func (p *Parser) dfs(lhs SymbolID, startPos int) (match bool, pos int) {
+	pos = startPos
+
+	if pos == -1 {
+		return false, -1
+	}
+	if pos == len(p.symbols)-1 && p.symbols[len(p.symbols)-1].ID == End {
+		return true, pos
+	}
+	for pIdx, prod := range LREProduction[lhs] {
+		p.tried++
+
+		for sIdx, symbol := range prod.RHS {
+			if symbol.Terminal() {
+				if p.symbols[pos].ID == symbol {
+					p.markMatch(lhs, pIdx, sIdx, symbol)
+					pos++
+
+					continue
+				} else {
+					p.missMatch(lhs, pIdx, sIdx, symbol)
+					p.discarded++
+
+					goto OUTERLOOP_CONTINUE
+				}
+			} else if symbol.NonTerminal() {
+				ok, position := p.dfs(symbol, pos)
+				if ok {
+					pos = position
+					continue
+				} else {
+					p.discarded++
+					goto OUTERLOOP_CONTINUE
+				}
+			} else if symbol == End {
+				// p.markFinish()
+				return true, pos
+			}
+			p.log.Errorf("\n!!!\nthere might be error in "+
+				"your productions table: "+
+				"current pos %v, current lhs %v, "+
+				"current rhs %v, current rhs sym %v\n!!!\n\n",
+				pos, lhs, prod, symbol)
+		}
+		return true, pos
+	OUTERLOOP_CONTINUE:
+		pos = startPos // try new prod in rhs rules
+
+	}
+	p.log.Logf("[failed]\n grammar not matched, symbols \n%v\n"+
+		"failed at pos %v\n",
+		p.symbols, pos)
+	return false, -1
 }
 
 // RunDFS runs DFS (or fancy named recursive descent traversal)
 func (p *Parser) RunDFS() {
-
+	if p.chatty {
+		p.log.Logf("\n****\nsymbols: %v\n****\n", p.symbols)
+	}
+	success, _ := p.dfs(S, 0)
+	if success {
+		p.markFinish()
+	}
+	// close(p.diagnostics)
 }
 
 // NewDFSParser construct a parser pointer which runs DFS to parse the input
-func NewDFSParser(input string) *Parser {
+func NewDFSParser(syms []Symbol, mylogger Logger, verbosity bool) *Parser {
 	point := &Parser{
-		inputStream: input,
-		symbols:     loadSymbols(input),
-		diagnostics: make(chan pathinfo),
+		symbols: syms,
+		log:     mylogger,
+		chatty:  verbosity,
+		// diagnostics: make(chan pathinfo),
 	}
-	go point.RunDFS()
+	// go point.RunDFS()
 	return point
+}
+
+// Logger custom logging mechnaism
+type Logger interface {
+	Logf(format string, args ...interface{})
+	Errorf(format string, args ...interface{})
 }
