@@ -83,9 +83,6 @@ func buildLREProduction() map[SymbolID][]Production {
 		{[]SymbolID{id, eq, num}},
 		{[]SymbolID{id, gt, num}},
 		{[]SymbolID{id, lt, num}},
-		{[]SymbolID{num, eq, num}},
-		{[]SymbolID{num, gt, num}},
-		{[]SymbolID{num, lt, num}},
 	}
 	rst[BConst] = []Production{
 		{[]SymbolID{trueConst}},
@@ -126,7 +123,7 @@ func (p *Parser) markFinish(success bool) {
 		p.log.Logf("\n=== Ungrammatical ===\n")
 	}
 	p.log.Logf("original input:\n%v\n"+
-		"# of symbols %v;\n"+
+		"# of symbols: %v;\n"+
 		"tried %v; discarded %v; successfully matched %v.\n",
 		p.symbols,
 		len(p.symbols)-1,
@@ -183,12 +180,10 @@ func (p *Parser) dfs(lhs SymbolID, startPos int) (match bool, pos int) {
 				if p.symbols[pos].ID == symbol {
 					p.markMatch(lhs, pIdx, sIdx, symbol)
 					pos++
-
 					continue
 				} else {
 					p.missMatch(lhs, pIdx, sIdx, symbol)
 					p.discarded++
-
 					goto OUTERLOOP_CONTINUE
 				}
 			} else if symbol.NonTerminal() {
