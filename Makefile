@@ -10,7 +10,7 @@ BIBTEX_OBJ=lexer_reportNotes.bib
 FINALOUTCOME=cpu.pdf mem.pdf lexer_report.pdf coverage.html godoc.html
 
 test:
-	go test -v
+	go test
 
 uf:
 	go test unionfind.go unionfind_test.go

@@ -214,6 +214,10 @@ func (p *Parser) dfs(lhs SymbolID, startPos int) (match bool, pos int) {
 
 // RunDFS runs DFS (or fancy named recursive descent traversal)
 func (p *Parser) RunDFS() {
+	if len(p.symbols) == 0 {
+		p.log.Errorf("symbols input is empty array, this is " +
+			"considered as error\nCheck your input.\n")
+	}
 	if p.chatty {
 		p.log.Logf("\n****\nsymbols: %v\n****\n", p.symbols)
 	}
