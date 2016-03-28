@@ -30,16 +30,59 @@ func parseTestCases(s string) [][]Symbol {
 }
 
 func TestDFSParser(t *testing.T) {
+	var suc, fail int
+	t.Logf("\n\n\n\nLRE\n\n\n\n\n")
+	suc, fail = 0, 0
 	testCases1 := parseTestCases(topDownParsingInput1)
 	for _, testcase := range testCases1 {
-		p := NewDFSParser(testcase, t, false)
-		p.RunDFS()
+		p := NewDFSParser(testcase, t, LRE, false)
+		s := p.RunDFS()
+		if s {
+			suc++
+		} else {
+			fail++
+		}
 	}
+	t.Logf("\nLRE input1 # of grammatical: %v\n", suc)
+	t.Logf("\nLRE input1 # of ungrammatical: %v\n\n\n", fail)
+	suc, fail = 0, 0
 	testCases2 := parseTestCases(topDownParsingInput2)
 	for _, testcase := range testCases2 {
-		p := NewDFSParser(testcase, t, false)
-		p.RunDFS()
+		p := NewDFSParser(testcase, t, LRE, false)
+		s := p.RunDFS()
+		if s {
+			suc++
+		} else {
+			fail++
+		}
 	}
+	t.Logf("\nLRE input2 # of grammatical: %v\n", suc)
+	t.Logf("\nLRE input2 # of ungrammatical: %v\n\n\n", fail)
+	suc, fail = 0, 0
+	t.Logf("\n\n\n\nLL1\n\n\n\n\n")
+	for _, testcase := range testCases1 {
+		p := NewDFSParser(testcase, t, LL1, false)
+		s := p.RunDFS()
+		if s {
+			suc++
+		} else {
+			fail++
+		}
+	}
+	t.Logf("\nLL1 input1 # of grammatical: %v\n", suc)
+	t.Logf("\nLL1 input1 # of ungrammatical: %v\n\n\n", fail)
+	suc, fail = 0, 0
+	for _, testcase := range testCases2 {
+		p := NewDFSParser(testcase, t, LL1, false)
+		s := p.RunDFS()
+		if s {
+			suc++
+		} else {
+			fail++
+		}
+	}
+	t.Logf("\nLL1 input2 # of grammatical: %v\n", suc)
+	t.Logf("\nLL1 input2 # of ungrammatical: %v\n\n\n", fail)
 }
 
 // tom $$$
