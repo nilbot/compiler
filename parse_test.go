@@ -85,6 +85,65 @@ func TestDFSParser(t *testing.T) {
 	t.Logf("\nLL1 input2 # of ungrammatical: %v\n\n\n", fail)
 }
 
+func TestPredictiveParsing(t *testing.T) {
+	suite1 := parseTestCases(topDownParsingInput1)
+	suite2 := parseTestCases(topDownParsingInput2)
+
+	var suc, fail int
+	for _, tc := range suite1 {
+		p := NewPredictiveParser(tc, t, false)
+		s := p.RunPredictiveParsing()
+		if s {
+			suc++
+		} else {
+			fail++
+		}
+	}
+	t.Logf("\n[PredictiveParser] input1 # of grammatical: %v\n", suc)
+	t.Logf("\n[PredictiveParser] input1 # of ungrammatical: %v\n\n", fail)
+	suc, fail = 0, 0
+	for _, tc := range suite2 {
+		p := NewPredictiveParser(tc, t, false)
+		s := p.RunPredictiveParsing()
+		if s {
+			suc++
+		} else {
+			fail++
+		}
+	}
+	t.Logf("\n[PredictiveParser] input2 # of grammatical: %v\n", suc)
+	t.Logf("\n[PredictiveParser] input2 # of ungrammatical: %v\n\n", fail)
+
+	// print firstset and followset and matrix
+	emptyParser := NewPredictiveParser([]Symbol{}, t, false)
+	printFirstSets(t, emptyParser.grammar)
+	printFollowSet(t, emptyParser.grammar)
+	t.Log(M)
+}
+
+func printFirstSets(t *testing.T, g Productions) {
+	for nt := range g {
+		for _, p := range g[nt] {
+			t.Logf("firstSet for p %v on nt %v:\n", p, nt)
+			t.Logf("%v\n", FirstSet(p.RHS, g))
+		}
+	}
+}
+func printFollowSet(t *testing.T, g Productions) {
+	nts := NonTerminals()
+	for _, nt := range nts {
+		fo := FollowSet(nt)
+		t.Logf("followset for nt %v:\n%v\n", nt, fo)
+	}
+}
+
+func TestDetailedPP(t *testing.T) {
+	idEqualNum := `2 2 10 0 1 33 99 0`
+	syms := parseTestCases(idEqualNum)[0]
+	p := NewPredictiveParser(syms, t, true)
+	p.RunPredictiveParsing()
+}
+
 // tom $$$
 //
 // not true $$$

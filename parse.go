@@ -1,6 +1,7 @@
 package compiler
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -14,22 +15,21 @@ type SymbolID int
 // represent them all.
 const (
 	TBegin     SymbolID = iota // Terminal begin
-	num                        // 0-9
-	id                         // id
-	lb                         // '('
-	rb                         // ')'
-	and                        // and op
-	or                         // or op
-	not                        // not op
-	trueConst                  // true
-	falseConst                 // false
-	eq                         // '='
-	lt                         // '<'
-	gt                         // '>'
+	num                        // 0-9 	: 1
+	id                         // id 	: 2
+	lb                         // '('	: 3
+	rb                         // ')'	: 4
+	and                        // and op	: 5
+	or                         // or op	: 6
+	not                        // not op	: 7
+	trueConst                  // true	: 8
+	falseConst                 // false	: 9
+	eq                         // '='	: 10
+	lt                         // '<'	: 11
+	gt                         // '>'	: 12
 	TEnd                       // terminal end
 	NTBegin                    // nonterminal begin
-	S                          //sentence start
-	Epsilon                    // empty production
+	S                          // sentence start
 	BExp                       // expression
 	BExp2                      // Bexp' to eliminate left recursion
 	BTerm                      // (math) term
@@ -37,6 +37,7 @@ const (
 	BFactorP                   // LL(1) grammar rule
 	BConst                     // constant
 	NTEnd                      // nonterminal end
+	Epsilon                    // empty production
 	End        = 99            // sentence end
 )
 
@@ -51,13 +52,13 @@ type Production struct {
 	RHS []SymbolID // right hand side
 }
 
-// Terminal tells if the the symbol is terminal
-func (s SymbolID) Terminal() bool {
+// T tells if the the symbol is terminal
+func (s SymbolID) T() bool {
 	return s < TEnd && s > TBegin
 }
 
-//NonTerminal tells if the symbol is nonterminal
-func (s SymbolID) NonTerminal() bool {
+//NT tells if the symbol is nonterminal
+func (s SymbolID) NT() bool {
 	return s < NTEnd && s > NTBegin
 }
 
@@ -125,7 +126,7 @@ func (p *Parser) markFinish(success bool) {
 		"# of symbols: %v;\n"+
 		"tried %v; discarded %v; successfully matched %v.\n",
 		p.symbols,
-		len(p.symbols)-1,
+		len(p.symbols),
 		p.tried,
 		p.discarded,
 		p.tried-p.discarded)
@@ -175,7 +176,7 @@ func (p *Parser) dfs(lhs SymbolID, startPos int) (match bool, pos int) {
 		p.tried++
 
 		for sIdx, symbol := range prod.RHS {
-			if symbol.Terminal() {
+			if symbol.T() {
 				if p.symbols[pos].ID == symbol {
 					p.markMatch(lhs, pIdx, sIdx, symbol)
 					pos++
@@ -185,7 +186,7 @@ func (p *Parser) dfs(lhs SymbolID, startPos int) (match bool, pos int) {
 					p.discarded++
 					goto OUTERLOOP_CONTINUE
 				}
-			} else if symbol.NonTerminal() {
+			} else if symbol.NT() {
 				ok, position := p.dfs(symbol, pos)
 				if ok {
 					pos = position
@@ -195,6 +196,8 @@ func (p *Parser) dfs(lhs SymbolID, startPos int) (match bool, pos int) {
 					goto OUTERLOOP_CONTINUE
 				}
 			} else if symbol == End {
+				return true, pos
+			} else if symbol == Epsilon {
 				return true, pos
 			}
 			p.log.Errorf("\n!!!\nthere might be error in "+
@@ -299,9 +302,10 @@ func buildLL1Productions() map[SymbolID][]Production {
 // Productions synonym for ease of use
 type Productions map[SymbolID][]Production
 
+// NullableNT is NT nullable? avoid list contains ε?
 func NullableNT(NT SymbolID, G Productions, avoid []SymbolID) bool {
 	for _, p := range G[NT] {
-		if noTerminals(p.RHS) && noNT(NT, p.RHS) &&
+		if noTerminals(p.RHS) && notContains(p.RHS, NT) &&
 			noMustAvoid(p.RHS, avoid) &&
 			eachNullable(p.RHS, G, plus(avoid, NT)) {
 			return true
@@ -312,16 +316,7 @@ func NullableNT(NT SymbolID, G Productions, avoid []SymbolID) bool {
 
 func noTerminals(rhs []SymbolID) bool {
 	for _, s := range rhs {
-		if s.Terminal() {
-			return false
-		}
-	}
-	return true
-}
-
-func noNT(nt SymbolID, rhs []SymbolID) bool {
-	for _, s := range rhs {
-		if s == nt {
+		if s.T() {
 			return false
 		}
 	}
@@ -369,23 +364,25 @@ func eachNullable(rhs []SymbolID, gr Productions, avoid []SymbolID) bool {
 	return true
 }
 
+// FirstSet returns the First Set for seq in respect to G
 func FirstSet(seq []SymbolID, G Productions) []SymbolID {
 	if len(seq) == 0 {
 		return []SymbolID{Epsilon}
-	} else if seq[0].Terminal() {
+	} else if len(seq) == 1 && seq[0] == Epsilon {
+		return []SymbolID{Epsilon}
+	} else if seq[0].T() || seq[0] == End {
 		return []SymbolID{seq[0]}
-	} else {
-		nt := seq[0]
-		var f2 []SymbolID
-		for _, p := range G[nt] {
-			f2 = union(f2, FirstSet(p.RHS, G))
-		}
-		if notContains(f2, Epsilon) {
-			return f2
-		}
-		return union(minus(f2, Epsilon),
-			FirstSet(seq[1:len(seq)], G))
 	}
+	nt := seq[0]
+	var f2 []SymbolID
+	for _, p := range G[nt] {
+		f2 = union(f2, FirstSet(p.RHS, G))
+	}
+	if notContains(f2, Epsilon) {
+		return f2
+	}
+	return union(minus(f2, Epsilon), FirstSet(seq[1:], G))
+
 }
 
 func union(s1 []SymbolID, s2 []SymbolID) []SymbolID {
@@ -410,4 +407,437 @@ func notContains(set []SymbolID, target SymbolID) bool {
 		}
 	}
 	return true
+}
+
+// FollowSet returns the Follow Set
+func FollowSet(NT SymbolID) []SymbolID {
+	return FS[NT]
+}
+
+// FollowSetHashTable SymbolID -> []SymbolID
+type FollowSetHashTable map[SymbolID][]SymbolID
+
+// FS FollowSetHashTable
+var FS FollowSetHashTable
+
+// IN InheritorsHashTable
+var IN FollowSetHashTable
+
+func buildFollowSetMap(G Productions) {
+	FS = make(map[SymbolID][]SymbolID)
+	IN = make(map[SymbolID][]SymbolID)
+	FS[BExp] = plus([]SymbolID{}, End)
+	for k := range G {
+		for _, p := range G[k] {
+			r := p.RHS
+			l := len(r)
+			for i := 0; i < l; i++ {
+				s := r[i]
+				if s.NT() {
+					for _, f := range FirstSet(r[i+1:l],
+						G) {
+						if f == Epsilon {
+							IN[k] = plus(IN[k], s)
+						} else {
+							FS[s] = plus(FS[s], f)
+						}
+					}
+				}
+			}
+		}
+	}
+	idle := false
+	for !idle {
+		idle = true
+		for nt1, value := range IN {
+			for _, nt2 := range value {
+				idle = fillNT(nt1, nt2)
+			}
+		}
+	}
+}
+
+func fillNT(nt1, nt2 SymbolID) bool {
+	idle := true
+	for _, item := range FS[nt1] {
+		if item.T() || item == End {
+			if notContains(FS[nt2], item) {
+				FS[nt2] = plus(FS[nt2], item)
+				idle = false
+			}
+		}
+	}
+	return idle
+}
+
+// PredictiveParsingTable is a (r,c) pair to production map
+type PredictiveParsingTable map[rxc]Production
+
+// rxc is row cross column
+type rxc struct {
+	row SymbolID
+	col SymbolID
+}
+
+// M is the table
+var M PredictiveParsingTable
+
+func buildM(G Productions) {
+	M = make(map[rxc]Production)
+
+	Xi := NonTerminals()
+	for _, nt := range Xi {
+		for _, a := range G[nt] {
+			fi := FirstSet(a.RHS, G)
+			for _, t := range fi {
+				rc := rxc{nt, t}
+				M[rc] = a
+			}
+			if contains(fi, Epsilon) {
+				fo := FollowSet(nt)
+				for _, t := range fo {
+					if t.T() {
+						rc := rxc{nt, t}
+						M[rc] = a
+					}
+					if t == End {
+						rc := rxc{nt, t}
+						M[rc] = a
+					}
+				}
+			}
+		}
+	}
+}
+
+func contains(set []SymbolID, target SymbolID) bool {
+	for _, s := range set {
+		if s == target {
+			return true
+		}
+	}
+	return false
+}
+
+// Stack: Go has no built-in Stack
+type Stack struct {
+	container []SymbolID
+}
+
+func (s *Stack) Empty() bool     { return len(s.container) == 0 }
+func (s *Stack) Push(t SymbolID) { s.container = append(s.container, t) }
+func (s *Stack) Top() SymbolID   { return s.container[len(s.container)-1] }
+func (s *Stack) Pop() SymbolID {
+	r := s.container[len(s.container)-1]
+	s.container = s.container[:len(s.container)-1]
+	return r
+}
+
+func (p *Parser) predictiveParse() bool {
+	stack := &Stack{}
+	stack.Push(End)
+	stack.Push(BExp)
+	nextIdx := 0
+	a := p.symbols[nextIdx].ID
+
+	T := stack.Top()
+	tries := 0
+	if p.chatty {
+		p.log.Logf("T: %v, stack: %v, token a: %v\n", T,
+			stack.container, a)
+	}
+	for {
+		tries++
+		if T == a {
+			stack.Pop()
+			nextIdx++
+			a = p.symbols[nextIdx].ID
+			if p.chatty {
+				p.log.Logf("next a is %v, T should remain"+
+					" the same: %v, stack.size() %v\n",
+					a, T, len(stack.container))
+			}
+		} else if T.T() {
+			p.log.Logf("[Error]\nT: %v is terminal\n", T)
+			return false
+		} else if len(M[rxc{T, a}].RHS) == 0 {
+			p.log.Logf("[Error]\nM(%v,%v) cell is empty\n",
+				T, a)
+			return false
+		} else if len(M[rxc{T, a}].RHS) > 0 {
+			prd := M[rxc{T, a}].RHS
+			if p.chatty {
+				p.log.Logf("before expand %v",
+					stack.container)
+				p.log.Logf("expanding stack %v", prd)
+			}
+			stack.Pop()
+			for i := len(prd) - 1; i >= 0; i-- {
+				// for i := 0; i < len(prd); i++ {
+
+				stack.Push(prd[i])
+
+			}
+			if p.chatty {
+				p.log.Logf("after popping and reverse add %v",
+					stack.container)
+			}
+			T = stack.Top()
+			if p.chatty {
+				p.log.Logf("new T %v", T)
+			}
+		}
+	}
+	p.tried = tries
+	return true
+}
+
+func (p *Parser) predictive() bool {
+	st := newStack()
+	st.Push(End)
+	st.Push(S)
+	idx := 0
+	token := p.symbols[idx]
+
+	for X := st.Top(); X != End; X = st.Top() {
+		p.tried++
+		if X.T() || X == End {
+			if X == token.ID {
+				oldX := X
+				X = st.Pop()
+				idx++
+				token = p.symbols[idx]
+				if p.chatty {
+					p.log.Logf("X matched token %v, "+
+						"new popped X is %v, "+
+						"new token is %v, "+
+						"stack size %v.",
+						oldX,
+						X,
+						token.ID,
+						len(st.container))
+				}
+			} else {
+				p.log.Logf("[Error] Parsing failed on miss T")
+				return false
+			}
+		} else if X == Epsilon {
+			if p.chatty {
+				p.log.Logf("X is %v, current stack %v, "+
+					"original input symobls are: %v, "+
+					"current symbol idx %v",
+					X,
+					st.container,
+					p.symbols,
+					idx)
+			}
+			st.Pop()
+		} else {
+			pr := M[rxc{X, token.ID}]
+			if p.chatty {
+				p.log.Logf("old stack: %v",
+					st.container)
+				p.log.Logf("expanding production: %v", pr)
+				p.log.Logf("X is %v, "+
+					"token is %v, "+
+					"stack size %v.",
+					X,
+					token.ID,
+					len(st.container))
+			}
+			if len(pr.RHS) > 0 {
+				X = st.Pop()
+				for i := len(pr.RHS) - 1; i >= 0; i-- {
+					st.Push(pr.RHS[i])
+				}
+				if p.chatty {
+					p.log.Logf("new stack: %v",
+						st.container)
+				}
+			} else {
+				p.log.Logf("[Error] Empty Cell")
+				if p.chatty {
+					p.log.Logf(
+						"[Error]\nM(%v,%v)"+
+							" cell is empty\n",
+						X, token.ID)
+				}
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func newStack() *Stack {
+	return &Stack{make([]SymbolID, 0)}
+}
+
+func (p *Parser) RunPredictiveParsing() bool {
+	// success := p.predictiveParse()
+	success := p.predictive()
+	if success {
+		p.log.Logf("\n==== Grammatical ====\n")
+	} else {
+		p.log.Logf("\n=== Ungrammatical ===\n")
+		p.log.Logf("%v\n", p.symbols)
+	}
+	p.log.Logf("made %v matching and since no backtracking, there"+
+		" is no discard count. ", p.tried)
+	return success
+}
+
+func NewPredictiveParser(input []Symbol, mylogger Logger,
+	verbosity bool) *Parser {
+	pointer := &Parser{
+		grammar: buildLL1Productions(),
+		chatty:  verbosity,
+		symbols: input,
+		log:     mylogger,
+	}
+	buildFollowSetMap(pointer.grammar)
+	buildM(pointer.grammar)
+	return pointer
+}
+
+func Terminals() []SymbolID {
+	var rst []SymbolID
+	for i := TBegin + 1; i < TEnd; i++ {
+		rst = append(rst, SymbolID(i))
+	}
+	return rst
+}
+
+func NonTerminals() []SymbolID {
+	var rst []SymbolID
+	for i := NTBegin + 1; i < NTEnd; i++ {
+		rst = append(rst, SymbolID(i))
+	}
+	return rst
+}
+
+func (p PredictiveParsingTable) String() string {
+	rows := NonTerminals()
+	cols := Terminals()
+	rst := "\n\t\t" + fmt.Sprintln(cols)
+	for _, r := range rows {
+		rst = rst + r.String() + ":\t"
+		for _, c := range cols {
+			if len(p[rxc{r, c}].RHS) != 0 {
+				rst = rst + fmt.Sprint(p[rxc{r, c}].RHS, " ")
+			} else {
+				rst = rst + fmt.Sprint("[ X ] ")
+			}
+		}
+
+		rst = rst + "\n\n"
+	}
+	return rst
+}
+
+//String er for SymbolID
+func (s SymbolID) String() string {
+	switch s {
+	case S:
+		return "S"
+	case BExp:
+		return "BExp"
+	case BExp2:
+		return "BExp2"
+	case BTerm:
+		return "BTerm"
+	case BFactor:
+		return "BFactor"
+	case BFactorP:
+		return "BFactorP"
+	case BConst:
+		return "BConst"
+	case Epsilon:
+		return "ε"
+	case id:
+		return "id"
+	case lb:
+		return "("
+	case rb:
+		return ")"
+	case num:
+		return "num"
+	case eq:
+		return "="
+	case lt:
+		return "<"
+	case gt:
+		return ">"
+	case and:
+		return "and"
+	case or:
+		return "or"
+	case not:
+		return "not"
+	case trueConst:
+		return "true"
+	case falseConst:
+		return "false"
+	case End:
+		return "$$$"
+	default:
+		return fmt.Sprintf("UNDEFINED: %2d", s)
+	}
+}
+
+//String er for SymbolID
+func (s Symbol) String() string {
+	var prefix, postfix string
+	postfix = " " + strconv.Itoa(s.Attribute)
+	switch s.ID {
+	case S:
+		prefix = "S"
+	case BExp:
+		prefix = "BExp"
+	case BExp2:
+		prefix = "BExp2"
+	case BTerm:
+		prefix = "BTerm"
+	case BFactor:
+		prefix = "BFactor"
+	case BFactorP:
+		prefix = "BFactorP"
+	case BConst:
+		prefix = "BConst"
+	case Epsilon:
+		prefix = "ε"
+	case id:
+		prefix = "id"
+	case lb:
+		prefix = "("
+	case rb:
+		prefix = ")"
+	case num:
+		prefix = "num"
+	case eq:
+		prefix = "="
+	case lt:
+		prefix = "<"
+	case gt:
+		prefix = ">"
+	case and:
+		prefix = "and"
+	case or:
+		prefix = "or"
+	case not:
+		prefix = "not"
+	case trueConst:
+		prefix = "true"
+	case falseConst:
+		prefix = "false"
+	case End:
+		prefix = "$$$"
+	default:
+		panic("can't happen")
+	}
+	return prefix + postfix
+}
+
+func (r rxc) String() string {
+	return "(" + r.row.String() + "," + r.col.String() + ")"
 }
