@@ -427,7 +427,7 @@ func buildFollowSetMap(G Productions) {
 	FS = make(map[SymbolID][]SymbolID)
 	IN = make(map[SymbolID][]SymbolID)
 	FS[BExp] = plus([]SymbolID{}, End)
-	for k := range G {
+	for _, k := range NonTerminals() {
 		for _, p := range G[k] {
 			r := p.RHS
 			l := len(r)
