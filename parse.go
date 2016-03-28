@@ -649,7 +649,7 @@ func NewPredictiveParser(input []Symbol, mylogger Logger,
 	return pointer
 }
 
-// Terminsals returns list of terminals
+// Terminals returns list of terminals
 func Terminals() []SymbolID {
 	var rst []SymbolID
 	for i := TBegin + 1; i < TEnd; i++ {
@@ -670,9 +670,9 @@ func NonTerminals() []SymbolID {
 func (p PredictiveParsingTable) String() string {
 	rows := NonTerminals()
 	cols := Terminals()
-	rst := "\n\t\t" + fmt.Sprintln(cols)
+	rst := "\n\t" + fmt.Sprintln(cols)
 	for _, r := range rows {
-		rst = rst + r.String() + ":\t"
+		rst = rst + r.String() + ": "
 		for _, c := range cols {
 			if len(p[rxc{r, c}].RHS) != 0 {
 				rst = rst + fmt.Sprint(p[rxc{r, c}].RHS, " ")

@@ -9,7 +9,7 @@ LATEX_OBJS=*.out *.log *.blg *.bbl *.aux $(ALL_BIBTEX_OBJ)
 LEXER_BIBTEX_OBJ=lexer_reportNotes.bib
 PARSER_BIBTEX_OBJ=parser_reportNotes.bib
 ALL_BIBTEX_OBJ=$(LEXER_BIBTEX_OBJ) $(PARSER_BIBTEX_OBJ)
-DFS_PARSER_OUTPUT_TXT=dfsparser.output.txt
+DFS_PARSER_OUTPUT_TXT=parser.output.txt
 FINALOUTCOME=cpu.pdf mem.pdf lexer_report.pdf coverage.html godoc.html
 
 test:
@@ -28,15 +28,7 @@ lexer:
 	go test lex.go lex_test.go tests.go trie.go trie_test.go
 
 print_parser_output: clean_parser_output
-	go test parse*.go -v > $(DFS_PARSER_OUTPUT_TXT) && \
-	echo " " >> $(DFS_PARSER_OUTPUT_TXT) && \
-	echo "# of grammatical ones: " >> $(DFS_PARSER_OUTPUT_TXT) && \
-	cat $(DFS_PARSER_OUTPUT_TXT) | grep ' Gr' | wc -l \
-	>> $(DFS_PARSER_OUTPUT_TXT) && \
-	echo " " >> $(DFS_PARSER_OUTPUT_TXT) && \
-	echo "# of ungrammatical ones: " >> $(DFS_PARSER_OUTPUT_TXT) && \
-	cat $(DFS_PARSER_OUTPUT_TXT) | grep ' Un' | wc -l \
-	>> $(DFS_PARSER_OUTPUT_TXT)
+	go test parse*.go -v > $(DFS_PARSER_OUTPUT_TXT)
 
 godo:
 	godoc -tabwidth 2 -html . > $(GODOC_OBJ)

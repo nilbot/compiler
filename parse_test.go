@@ -114,11 +114,6 @@ func TestPredictiveParsing(t *testing.T) {
 	t.Logf("\n[PredictiveParser] input2 # of grammatical: %v\n", suc)
 	t.Logf("\n[PredictiveParser] input2 # of ungrammatical: %v\n\n", fail)
 
-	// print firstset and followset and matrix
-	emptyParser := NewPredictiveParser([]Symbol{}, t, false)
-	printFirstSets(t, emptyParser.grammar)
-	printFollowSet(t, emptyParser.grammar)
-	t.Log(M)
 }
 
 func printFirstSets(t *testing.T, g Productions) {
@@ -142,6 +137,15 @@ func TestDetailedPP(t *testing.T) {
 	syms := parseTestCases(idEqualNum)[0]
 	p := NewPredictiveParser(syms, t, true)
 	p.RunPredictiveParsing()
+}
+
+func TestFirstFollowPredictiveTable(t *testing.T) {
+	// print firstset and followset and matrix
+	t.Log("\n\n\nFirstSets, FollowSets, PredictiveTable\n\n")
+	emptyParser := NewPredictiveParser([]Symbol{}, t, false)
+	printFirstSets(t, emptyParser.grammar)
+	printFollowSet(t, emptyParser.grammar)
+	t.Log(M)
 }
 
 // tom $$$
