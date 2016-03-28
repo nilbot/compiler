@@ -434,14 +434,7 @@ func buildFollowSetMap(G Productions) {
 			for i := 0; i < l; i++ {
 				s := r[i]
 				if s.NT() {
-					for _, f := range FirstSet(r[i+1:l],
-						G) {
-						if f == Epsilon {
-							IN[k] = plus(IN[k], s)
-						} else {
-							FS[s] = plus(FS[s], f)
-						}
-					}
+					fillSets(i, l, r, k, s, G)
 				}
 			}
 		}
@@ -453,6 +446,15 @@ func buildFollowSetMap(G Productions) {
 			for _, nt2 := range value {
 				idle = fillNT(nt1, nt2)
 			}
+		}
+	}
+}
+func fillSets(i, l int, r []SymbolID, k, s SymbolID, G Productions) {
+	for _, f := range FirstSet(r[i+1:l], G) {
+		if f == Epsilon {
+			IN[k] = plus(IN[k], s)
+		} else {
+			FS[s] = plus(FS[s], f)
 		}
 	}
 }

@@ -74,8 +74,8 @@ This report explores the implementation of Top-down Parsers both in concept and 
 
 
 
-\section{Concept}
-
+\section{Concept and Preparation}
+In preparation a targeted grammar was modified such that there is no left-recursion in its production rules. This enables the top-down parser to be able to finish parsing. Further, the left-recursion eliminated (here after \textbf{LRE}) grammar was represented in program code, allowing parsers to access it directly.
 \subsection{Targeted Grammar}
 \begin{tabular}{lclr}
 BExp 	&::=& BTerm	&	$|$\\
@@ -84,16 +84,18 @@ BTerm 	&::=& BFactor	&	$|$\\
 &&	    not BTerm&\\BFactor&	::=& ( BExp )	&	$|$\\
 &&	    id		&	$|$\\
 &&	    BConst	&	$|$\\
-&&	    id=num	&	$|$\\
-&&	    id$>$num	&	$|$\\
-&&	    id$<$num&\\BConst&	::=& true&		$|$\\&&	    false&
+&&	    id = num	&	$|$\\
+&&	    id $>$ num	&	$|$\\
+&&	    id $<$ num&\\BConst&	::=& true&		$|$\\&&	    false&
 \end{tabular}
 
+
+\textbf{Note that the original (appeared in assignment) grammar didn't included }\texttt{num <=> num}\textbf{ rules, this however conflicts with moodle statement that input1 are all valid sentences (input2 has mixed sentences). After careful consideration I have decided not to deviate from the assignment specification, this means that last 2 cases of input1 are bound to fail. }\label{note:rant}
 \subsection{Preparation}
 \subsubsection{Eliminating left recursion}
 \begin{tabular}{lclr}
-S	&$\rightarrow$& BExp \$\$\$			&$|$\\
-BExp	&$\rightarrow$& BTerm BExp2		&$|$\\
+S	&$\rightarrow$& BExp \$\$\$			&\\
+BExp	&$\rightarrow$& BTerm BExp2		&\\
 BExp2	&$\rightarrow$& and BTerm BExp2	&$|$\\
 		&&		or BTerm	 BExp2			&$|$\\
 		&&		$\epsilon$				&\\
@@ -104,191 +106,78 @@ BFactor	&$\rightarrow$& ( BExp )			&$|$\\
 		&&	   	BConst					&$|$\\
 		&&	   	id = num					&$|$\\
 		&&	   	id $>$ num				&$|$\\
-		&&	   	id $<$ num				&$|$\\
-		&&	   	num = num				&$|$\\
-		&&	   	num $>$ num				&$|$\\
-		&&	   	num $<$ num				&\\
+		&&	   	id $<$ num				&\\
 BConst	&$\rightarrow$& true				&$|$\\
 		&&	   	false					&
 \end{tabular}
 
+The original grammar had 13 productions, the \texttt{LRE} grammar has 15 productions.
+\subsubsection{Grammar productions representation}
+
+I chose to use (hash)map to represent the mapping from \texttt{LHS} (single symbol in our simple grammar) to \texttt{RHS}, a sequence of symbols containing terminals or non-terminals. 
+
+The production mapping contains $\epsilon$ in the \texttt{RHS}, but it is not terminal and it was handled during parsing in separate fashion similar to boundary check.
 
 
-\section{Lexer}
+\section{Backtracking Recursive-Descent Parser}
+Parsing a sequence of symbol against given grammar is not an easy task, luckily the $LL$ grammar laid out a strategy that can be followed similar to searching a solution in graph. In fact, recursive-descent parsing is non-other than depth first search on a tree starting from \texttt{S} to every leaf matching a terminal at the corresponding position. The intricacies of this particular \texttt{DFS} is to maintain of invariants and examine all the conditions carefully.
 
+As mentioned in \ref{note:rant}, when running RDP against \texttt{input1} it shows first 4 grammatical and last 2 ungrammatical. 6 and 4 for \texttt{input2}, respectively. Detailed output is attached as appendix.
+\section{Predictive Parser}
 
-\subsection{State Machine with Function Pointer}
+\subsection{Left-factoring to produce $LL(1)$}
 
-Once initialized, a lexer will start running with start state and keep updating
-itself: the state variable is a function pointer pointing to current state's execution function, whose function body contains routines on how to process specifically the current state and handles state changes. Upon triggering state transition, the function returns a new function pointer, which points to the intended new state. Thus the state variable is re-assigned to the new state.
+$LL(1)$ grammar is to eliminate ambiguity in \texttt{RHS} leading symbols, such that a parser with lookahead (1 in $LL(1)$ case) parsing $LL(1)$ wouldn't need to backtrack. 
 
-The routine halts if the state machine reaches an accepting state or error, both mean that the return state is a \textbf{nil} pointer. 
-
-\newpage
-
-\begin{widetext}
-\centering
-\begin{lstlisting}[label=state-transition,caption=State Machine Transition]
-func (receiver *Lexer) Run() {
-	for receiver.State = startState; receiver.State != nil; {
-		receiver.State = receiver.State(receiver)
-	}
-	close(receiver.Tokens) // finish by closing channel
-}
-\end{lstlisting}
-\end{widetext}
-
-\subsubsection{State Machine Diagram}%
-
-\begin{widetext}
-\centering
-\begin{tikzpicture}[shorten >=1pt,node distance=4cm,on grid,auto] 
-   \node[state,initial,accepting] (start)   {\textbf{Start}}; 
-   \node[state] (int) [above right=of start] {int}; 
-   \node[state,accepting] (text) [below right=of start] {text}; 
-   \node[state,accepting](lpar) [above left=of start] {lpar};
-   \node[state,accepting](id) [above=of start] {id};
-   \node[state,accepting] (rpar) [below left=of start] {rpar};
-   \node[state,accepting] (semicolon) [below=of start] {;};
-   \path[->] 
-   	(start) edge node {0-9} (int)
-    		edge node[above] {a-zA-Z} (id)
-		edge node[above]  {(} (lpar)
-		edge node[above] {)} (rpar)
-		edge node{;} (semicolon)
-		edge node {"} (text)
-		edge [loop right]node {$\mathtt{whitespace}$} ()
-		
-		(lpar) edge [bend left] node {} (start)
-		(rpar) edge [bend left] node {} (start)		
-		(semicolon) edge [bend left] node {} (start)
-		(id) edge [loop above] node {a-z} ()
-			edge [bend left] node {delim} (start)
-		(int) edge [loop above] node {0-9} ()
-			edge [bend left] node {delim} (start)			
-		(text) edge [bend left] node {"} (start)
-			edge [loop right] node {*} ()
-    ;
-\end{tikzpicture}
-\end{widetext}
-
-As shown in the diagram, {start}
-is the main entry point, from there the immediate possible states, depending
-on leading significant character, are {integer}, {identifier}, {keyword}
-(static identifiers), {text} (string) and {singleToken}. Using function pointer
-the {error} state doesn't need to be specified, instead the function pointer
-will be set to nil, so the lexing will terminate.
-
-There are details omitted in this diagram, mainly due to space constraints, such
-as escaping with character {\large \texttildelow}, the definition of ``delim'' including
-whitespace and state transition leading characters.
-
-\subsection{Emit Tokens}
-
-Upon successful lexing a token, the lexer emits this token to its message
-channel, this channel can be consumed by a potential parser, a logging / print
-mechanism or any interested party. One obvious feature of this implementation
-is that the parsing and lexing can be run at the same time.
-
-\subsubsection{Token Type}
-Our Lexer deals with a language that has these token types:
-
-\begin{table}[h]
-\centering
-\begin{tabular}{l|l}
-$\mathbf{Type}$& Description \\
-\hline
-$\mathtt{id}$& identifiers \\
-$\mathtt{int}$& integers \\
-$\mathtt{lpar}$& left parenthesis \\
-$\mathtt{rpar}$& right parenthesis \\
-$\mathtt{semicolon}$& ;s \\
-$\mathtt{string}$& strings \\
-$\mathtt{error}$& errors
+\subsubsection{$LL(1)$ Grammar}
+\begin{tabular}{lclr}
+S	&$\rightarrow$& BExp \$\$\$			&\\
+BExp	&$\rightarrow$& BTerm BExp2		&\\
+BExp2	&$\rightarrow$& and BTerm BExp2	&$|$\\
+		&&		or BTerm	 BExp2			&$|$\\
+		&&		$\epsilon$				&\\
+BTerm	&$\rightarrow$&	BFactor			&$|$\\
+		&&		not BTerm				&\\
+BFactor	&$\rightarrow$& ( BExp )			&$|$\\
+		&&	   	id BFactorP				&$|$\\
+		&&	   	BConst					&\\
+BFactorP&$\rightarrow$&	$\epsilon$			&$|$\\
+		&&		= num				&$|$\\
+		&&	   	$>$ num				&$|$\\
+		&&	   	$<$ num				&\\
+BConst	&$\rightarrow$& true				&$|$\\
+		&&	   	false					&
 \end{tabular}
-\end{table}
+\subsubsection{Re-running backtracking RDP on $LL(1)$}
 
-With whitespace characters deemed as natural delimiters, and at cases the
-transition between $\mathtt{<id>}$ and $\mathtt{<int>}$ is also deemed as delimiter. The $\mathtt{<lpar>}$,
-$\mathtt{<rpar>}$ and $\mathtt{<semicolon>}$ are both delimiter and tokens.
-The error token will effectively terminate consumption from client.
+When re-running the backtracking RDP on $LL(1)$, it reveals that I made a mistake in applying Left-factoring: in order to let the resulting $LL(1)$ grammar "look" better I re-ordered the $\epsilon$ rule of the non-terminal \texttt{BFactorP} so that it sits below the term \texttt{< num}. This obviously creates different syntax and some of the results did not agree with each other across the two grammars. 
 
-\subsection{Lexing Integers}
+Parsing $LL(1)$ grammar would obviously generate different number count for tried productions, discarded mis-matches etc. because the "depth" is different in few production rules. But the final result indicating the validity of the sentence should be the same.
 
-To avoid overflowing the parsing of input integer is performed character by character, such that as soon as already parsed number threatens the exceeding of \textit{max\_int} by either advancing by 10 fold, or with the addition of next digit, the parsing will ignore further digits and return -1. This avoids the pitfall of overflowing integer should the input integer string is too large.\ref{lex-integer}
-\begin{widetext}
-\begin{lstlisting}[label=lex-integer,caption=lexInteger]
-var rst int
-const maxint = 65535
-for {
-	r := l.Next()
-	if r == EOF {
-		break
-	}
-	if i := int(r - '0'); i >= 0 && i <= 9 {
-		if rst <= 6553 && rst > -1 {
-			rst *= 10
-			if maxint-rst < i {
-				rst = -1
-			} else {
-				rst += i
-			}
-		} else {
-			rst = -1
-			// not break, instead skip until transition
-		}
-	} else {
-		// potentially a state transition here
-		l.Backup()
-		break
-	}
-}	
-\end{lstlisting}
-\end{widetext}
+\subsection{FirstSet and FollowSet}
+To build the non-backtracking predictive parser, knowledge from FirstSet and FollowSet is required.
 
-\subsection{Escaping special character}
-The target language defined tilde $\thicksim$ as escape character. To realize the escape logic, an efficient way is to use a second pointer and output the extra escaped string in the same pass.
+A reenforced learning outcome of this assignment for me is the realisation that these sets are supposed to contains terminals (including artificial \texttt{End} token) only, with exception of $\epsilon$ in firstsets.
 
-\section{Flex}
-Implementing the same lexer using flex is very similar to the Go implementation but much simpler in some aspects. In fact I ported the Go implementation directly to C with virtually no syntax modification. The difference and difficulty of writing flex rules is to adhere to its state matching ordering logic. Because of flex's \texttt{regex} parsing is from top to down, some backtracking logic must be expressed using state or condition, for example the matching of EOF while trying to find the end quote must be put in front of the string rule (for the un-matched the string object to fallback to).
+Attached output contains a separate section of computed first sets of sequences, followsets of non-terminals and a crude drawing of predictive table. I regret not having enough time to polish the drawing, I was in process of writing a 2D rendering routine to generate vector graph for the matrix, but it would be again too much unnecessary work.
+\subsection{Predictive Parser}
+In the previous sections routines were implemented for generating FirstSet for production RHS and FollowSets of Non-Terminals. These result were utilised in predictive table building, such that when parsing input tokens against this table the parser would not need to backtrack (or recurse, if a explicit stack were used). The majority of debugging effort were used in phase of Predictive Parser. The conditions and invariants is little more difficult to be kept in head compared to recursive-descent parser, especially the handling of $\epsilon$ added to the internal stack, the step most not be broken that input token index gets forwarded without it's counterpart, the top of the stack symbol, being properly processed. 
+\section{Results}
+A unified running result is attached to this report. It contains testing results, including the counting of matching tries for both parsers and their parsing conclusions. Also there is a detailed parsing test containing verbosely generated report of internal concrete states when parsing a string of textual content "\texttt{tom = 33 \$\$\$}". 
 
-\section{Test and benchmark results}
-Writing good tests is both important quality benchmark and tremendous helper for implementing design using language such as Go: it's a good mix of both top down and bottom up practice, and couples with Go's expressiveness one can write complex programs without a debugger. Thanks to the testing facilities available as standard library, testing and benchmarking is very straight-forward. Even automatically generating complex profiling diagrams would not require much more effort.
-While all test and benchmark results are attached in appendix, I would like briefly give an overview of those in this section.
-
-\subsection{Test result for Go Lexer and Flex}
-The input examples are provided by lecturer, originally labeled as \textbf{input[1-9].txt}. Both Go Lexer and Flex are tested against these example inputs. Further there are few unit tests for Go implementation, all Go tests are to be found in source code listing labeled with \textbf{xxx\_test.go}
-The Go test result are embodied with simple benchmark timer and heading indicating individual test methods and its result, therefore it's more verbose. Readers should seek to heading after \textbf{TestOutput} to examine the result. The Flex result is just a simple heading followed by result. The format is different but the content is easily comparable.
-
-\subsection{Performance Benchmark and Profiling the Lexer}
-With the help of Go testing framework I performed benchmark on both\textbf{(*SymbolTable).Process} and \textbf{(*Lexer).Run}, with short and long sequence test-cases. While due to time constraints I don't have enough data to do vertical comparison between the Go implementation and an proper C implementation, the dumbed version of the C code however did finished processing 37 million words under 11 seconds. Further CPU profiling \footnote{due to the need of archiving certain degree of automation I chose to use buffered IO to read input into memory instead of reading off pipe as stream, there is some extra overhead in terms of loading time.} shows that while \textbf{(*Lexer).Run} occupies roughly 40\% of the CPU time, the major cumulative processing landed in channel communications. 
-
+Recap on the counting result, it reveals that generally \texttt{dfs} on $LL(1)$ grammar used fewer attempts on finding correct generation path, and \texttt{predictiveParsing} without backtracking uses even fewer attempt. They agree with the theoretic expectation of the mentioned approaches. However it's note that this observation is not absolute, for example translated $LL(1)$ grammar contains greater or equal count of productions, therefore a particular generation path would appear to be slower than \texttt{LRE}. Similarly a particular path when matching predictive matrix against input symbol would take a longer path in some example.
 \section{Appendix Overview}
+This assignment is about 1000 lines of source code comment free. 9 pages of test results. 
+
+
 \begin{enumerate}[$\surd$]
-	\item generated code documentation
+	\item source code listing: Parser 
 	\begin{enumerate}[$\blacktriangleright$]
-	\item compiler.pdf	
-	\end{enumerate}
-	\item source code listing: Go Compiler 
-	\begin{enumerate}[$\blacktriangleright$]
-	\item trie.go; trie\_test.go
-	\item lex.go; lex\_test.go
-	\item tests.go; doc.go
-	\end{enumerate}
-	\item source code listing: flex
-	\begin{enumerate}[$\blacktriangleright$]
-	\item compiler.flex
-	\item symboltable.h
+	\item parse.go; parse\_test.go
 	\end{enumerate}
 	\item test result / output
 	\begin{enumerate}[$\blacktriangleright$]
-	\item lexer\_out.pdf
-	\item flex\_out.pdf
-	\end{enumerate}
-	\item benchmarks
-	\begin{enumerate}[$\blacktriangleright$]
-	\item bench\_go.pdf
-	\item cpu-long-profile.pdf
+	\item parser.output.pdf
 	\end{enumerate}
 \end{enumerate}
 
