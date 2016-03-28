@@ -519,77 +519,25 @@ func contains(set []SymbolID, target SymbolID) bool {
 	return false
 }
 
-// Stack: Go has no built-in Stack
+// Stack Go has no built-in Stack
 type Stack struct {
 	container []SymbolID
 }
 
-func (s *Stack) Empty() bool     { return len(s.container) == 0 }
+// Empty tells if the stack is empty
+func (s *Stack) Empty() bool { return len(s.container) == 0 }
+
+// Push item on top
 func (s *Stack) Push(t SymbolID) { s.container = append(s.container, t) }
-func (s *Stack) Top() SymbolID   { return s.container[len(s.container)-1] }
+
+// Top grabs top without modifying index
+func (s *Stack) Top() SymbolID { return s.container[len(s.container)-1] }
+
+// Pop removes top item
 func (s *Stack) Pop() SymbolID {
 	r := s.container[len(s.container)-1]
 	s.container = s.container[:len(s.container)-1]
 	return r
-}
-
-func (p *Parser) predictiveParse() bool {
-	stack := &Stack{}
-	stack.Push(End)
-	stack.Push(BExp)
-	nextIdx := 0
-	a := p.symbols[nextIdx].ID
-
-	T := stack.Top()
-	tries := 0
-	if p.chatty {
-		p.log.Logf("T: %v, stack: %v, token a: %v\n", T,
-			stack.container, a)
-	}
-	for {
-		tries++
-		if T == a {
-			stack.Pop()
-			nextIdx++
-			a = p.symbols[nextIdx].ID
-			if p.chatty {
-				p.log.Logf("next a is %v, T should remain"+
-					" the same: %v, stack.size() %v\n",
-					a, T, len(stack.container))
-			}
-		} else if T.T() {
-			p.log.Logf("[Error]\nT: %v is terminal\n", T)
-			return false
-		} else if len(M[rxc{T, a}].RHS) == 0 {
-			p.log.Logf("[Error]\nM(%v,%v) cell is empty\n",
-				T, a)
-			return false
-		} else if len(M[rxc{T, a}].RHS) > 0 {
-			prd := M[rxc{T, a}].RHS
-			if p.chatty {
-				p.log.Logf("before expand %v",
-					stack.container)
-				p.log.Logf("expanding stack %v", prd)
-			}
-			stack.Pop()
-			for i := len(prd) - 1; i >= 0; i-- {
-				// for i := 0; i < len(prd); i++ {
-
-				stack.Push(prd[i])
-
-			}
-			if p.chatty {
-				p.log.Logf("after popping and reverse add %v",
-					stack.container)
-			}
-			T = stack.Top()
-			if p.chatty {
-				p.log.Logf("new T %v", T)
-			}
-		}
-	}
-	p.tried = tries
-	return true
 }
 
 func (p *Parser) predictive() bool {
@@ -673,20 +621,21 @@ func newStack() *Stack {
 	return &Stack{make([]SymbolID, 0)}
 }
 
+// RunPredictiveParsing wraps predictive parsing routine and do some logging
 func (p *Parser) RunPredictiveParsing() bool {
-	// success := p.predictiveParse()
 	success := p.predictive()
 	if success {
 		p.log.Logf("\n==== Grammatical ====\n")
 	} else {
 		p.log.Logf("\n=== Ungrammatical ===\n")
-		p.log.Logf("%v\n", p.symbols)
+		p.log.Logf("failed with input: %v\n", p.symbols)
 	}
-	p.log.Logf("made %v matching and since no backtracking, there"+
-		" is no discard count. ", p.tried)
+	p.log.Logf("made %v matching with no backtracking", p.tried)
 	return success
 }
 
+// NewPredictiveParser constructs a pointer of parser using LL1 grammar and
+// builds followset and predictivetable
 func NewPredictiveParser(input []Symbol, mylogger Logger,
 	verbosity bool) *Parser {
 	pointer := &Parser{
@@ -700,6 +649,7 @@ func NewPredictiveParser(input []Symbol, mylogger Logger,
 	return pointer
 }
 
+// Terminsals returns list of terminals
 func Terminals() []SymbolID {
 	var rst []SymbolID
 	for i := TBegin + 1; i < TEnd; i++ {
@@ -708,6 +658,7 @@ func Terminals() []SymbolID {
 	return rst
 }
 
+// NonTerminals return list of non terminals
 func NonTerminals() []SymbolID {
 	var rst []SymbolID
 	for i := NTBegin + 1; i < NTEnd; i++ {
