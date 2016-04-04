@@ -31,8 +31,8 @@ const (
 	NTBegin                    // nonterminal begin
 	S                          // sentence start
 	BExp                       // expression
-	BExp2                      // Bexp' to eliminate left recursion
 	BTerm                      // (math) term
+	BExp2                      // Bexp' to eliminate left recursion
 	BFactor                    // factor
 	BFactorP                   // LL(1) grammar rule
 	BConst                     // constant
