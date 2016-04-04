@@ -1,0 +1,6 @@
+{ int tom,  dick;
+int harry ; bool george;
+tom := 5 - 4 - 3;
+dick := (tom * 7) + 2;
+george := tom < dick;
+harry := tom < dick -> tom + 2 : tom - 2 }

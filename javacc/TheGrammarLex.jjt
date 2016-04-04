@@ -1,0 +1,118 @@
+
+PARSER_BEGIN(TheGrammarLex)
+
+/**
+ * TheGrammarLex:
+ */
+public class TheGrammarLex {
+    public static void main(String args[]) {
+        System.out.println("reading from standard input...");
+        TheGrammarLex tg = new TheGrammarLex(System.in);
+        try {
+            SimpleNode n = tg.Start();
+            n.dump("");
+            System.out.println("Thank you.");
+        } catch (Exception e) {
+            System.out.println("Oops. ");
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+        }
+    }
+}
+
+PARSER_END(TheGrammarLex)
+
+SKIP :
+{
+    " "
+|   "\t"
+|   "\n"
+|   "\r"
+}
+
+TOKEN :
+{
+< DECL_RESERVE: <DECL_INT>|<DECL_BOOL> >
+| <#DECL_INT: "int">
+| <#DECL_BOOL: "bool">
+}
+TOKEN:
+{
+< ID: (<ALPH>)+ >
+| <#ALPH: ["a"-"z","A"-"Z"] >
+}
+TOKEN:
+{
+< NUM: ([ "0"-"9" ])+ >
+}
+TOKEN:
+{
+< LCB : "{" >
+}TOKEN:
+{
+< RCB : "}" >
+}
+TOKEN:
+{
+< SC : ";" >
+}
+TOKEN:
+{
+< C : ":" >
+}
+TOKEN:
+{
+< PLUS : "+" >
+}
+TOKEN:
+{
+< MINUS : "-" >
+}
+TOKEN:
+{
+< MULT : "*" >
+}
+TOKEN:
+{
+< LB : "(" >
+}
+TOKEN:
+{
+< RB : ")" >
+}
+TOKEN:
+{
+< EQ : "=" >
+}
+TOKEN:
+{
+< LT : "<" >
+}
+TOKEN:
+{
+< GT : ">" >
+}
+TOKEN:
+{
+< IFTHENELSE : "->" >
+}
+TOKEN:
+{
+< DEF : ":=" >
+}
+TOKEN:
+{
+< COMMA : ",">
+}
+
+SimpleNode Start() : {}
+{
+    Token()
+    { return jjtThis; }
+}
+void Token() : {}
+{
+    <DECL_RESERVE> | <ID> | <NUM> | <LCB> | <RCB> | <C> | <SC>
+    | <PLUS> | <MINUS> | <MULT> | <LB> | <RB> | <LT> | <GT>
+    | <IFTHENELSE> | <DEF> | <COMMA>
+}
