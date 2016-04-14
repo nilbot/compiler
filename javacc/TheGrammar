@@ -1,0 +1,12 @@
+Block -> { Declset Stmtset }
+Declset -> Declset Decl | Decl
+Decl -> int Vars ; | bool Vars ;
+Vars -> id | Vars , id
+Stmtset -> Stmt | Stmtset ; Stmt
+Stmt -> Assn
+Assn -> id := Arith | id := Comp | id := Cond
+Arith -> Term | Arith + Term | Arith - Term
+Term -> Factor | Term * Factor
+Factor -> id | num | ( Arith )
+Comp -> Arith = Arith | Arith > Arith | Arith < Arith
+Cond -> Comp -> Arith : Arith 
