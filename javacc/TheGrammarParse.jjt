@@ -1,186 +1,3 @@
-
-PARSER_BEGIN(TheGrammarParse)
-
-/**
+PARSER_BEGIN(TheGrammarParse)/**
  * TheGrammarParse:
- */
-public class TheGrammarParse {
-    public static void main(String args[]) {
-        System.out.println("reading from standard input...");
-        TheGrammarParse tg = new TheGrammarParse(System.in);
-        try {
-            SimpleNode n = tg.Start();
-            n.dump("");
-            System.out.println("Thank you.");
-        } catch (Exception e) {
-            System.out.println("Oops. ");
-            System.out.println(e.getMessage());
-            e.printStackTrace();
-        }
-    }
-}
-
-PARSER_END(TheGrammarParse)
-
-SKIP :
-{
-    " "
-|   "\t"
-|   "\n"
-|   "\r"
-}
-
-TOKEN :
-{
-< DECL_RESERVE: <DECL_INT>|<DECL_BOOL> >
-| <#DECL_INT: "int">
-| <#DECL_BOOL: "bool">
-}
-TOKEN:
-{
-< ID: (<ALPH>)+ >
-| <#ALPH: ["a"-"z","A"-"Z"] >
-}
-TOKEN:
-{
-< NUM: ([ "0"-"9" ])+ >
-}
-TOKEN:
-{
-< LCB : "{" >
-}TOKEN:
-{
-< RCB : "}" >
-}
-TOKEN:
-{
-< SC : ";" >
-}
-TOKEN:
-{
-< C : ":" >
-}
-TOKEN:
-{
-< PLUS : "+" >
-}
-TOKEN:
-{
-< MINUS : "-" >
-}
-TOKEN:
-{
-< MULT : "*" >
-}
-TOKEN:
-{
-< LB : "(" >
-}
-TOKEN:
-{
-< RB : ")" >
-}
-TOKEN:
-{
-< EQ : "=" >
-}
-TOKEN:
-{
-< LT : "<" >
-}
-TOKEN:
-{
-< GT : ">" >
-}
-TOKEN:
-{
-< IFTHENELSE : "->" >
-}
-TOKEN:
-{
-< DEF : ":=" >
-}
-TOKEN:
-{
-< COMMA : ",">
-}
-
-SimpleNode Start() : {}
-{
-    <LCB> DeclarationSet() StatementSet() <RCB> 
-    { return jjtThis; }
-}
-void Epsilon() : {}
-{
-    {}
-}
-void DeclarationSet() : {}
-{
-    Declaration() DeclarationSetPrime()
-}
-void DeclarationSetPrime() : {}
-{
-    Declaration() DeclarationSetPrime() | Epsilon()
-}
-void Declaration() : {}
-{
-    <DECL_RESERVE> Vars() <SC>
-}
-void Vars() : {}
-{
-    <ID> VarsPrime()
-}
-void VarsPrime() : {}
-{
-    <COMMA> <ID> VarsPrime() | Epsilon()
-}
-void StatementSet() : {}
-{
-    Statement() StatementSetPrime()
-}
-void StatementSetPrime() : {}
-{
-    <SC> Statement() StatementSetPrime() | Epsilon()
-}
-void Statement() : {}
-{
-    <ID> <DEF> StatementPrime()
-}
-void StatementPrime() : {}
-{
-    Expression() StatementNext()
-}
-void StatementNext() : {}
-{
-    <LT> Expression() StatementNextPrime() | 
-    <EQ> Expression() StatementNextPrime() |
-    <GT> Expression() StatementNextPrime() |
-    Epsilon()
-}
-void StatementNextPrime() : {}
-{
-    <IFTHENELSE> Expression() <C> Expression() | Epsilon()
-}
-void Expression() : {}
-{
-    Term() A1()
-}
-void A1() : {}
-{
-    <PLUS> Term() A1() |
-    <MINUS> Term() A1() |
-    Epsilon()
-}
-void Term() : {}
-{
-    Factor() T1()
-}
-void T1() : {}
-{
-    <MULT> Factor() T1() |
-    Epsilon()
-}
-void Factor() : {}
-{
-    <ID> | <NUM> | <LB> Expression() <RB>
-}
+ */public class TheGrammarParse{        public static void main(String args [])        {                System.out.println("reading from standard input...");                TheGrammarParse tg = new TheGrammarParse(System.in);                try                {                        SimpleNode n = tg.Start();                        n.dump("");                        System.out.println("Thank you.");                }                catch (Exception e)                {                        System.out.println("Oops. ");                        System.out.println(e.getMessage());                        e.printStackTrace();                }        }}PARSER_END(TheGrammarParse)SKIP :{        " "|       "\t"|       "\n"|       "\r"}TOKEN :{        < DECL_RESERVE :                < DECL_INT >        |       < DECL_BOOL >>|       < #DECL_INT : "int" >|       < #DECL_BOOL : "bool" >}TOKEN :{        < ID : (< ALPH >)+ >|       < #ALPH : [ "a"-"z", "A"-"Z" ] >}TOKEN :{        < NUM : ([ "0"-"9" ])+ >}TOKEN :{        < LCB : "{" >}TOKEN :{        < RCB : "}" >}TOKEN :{        < SC : ";" >}TOKEN :{        < C : ":" >}TOKEN :{        < PLUS : "+" >}TOKEN :{        < MINUS : "-" >}TOKEN :{        < MULT : "*" >}TOKEN :{        < LB : "(" >}TOKEN :{        < RB : ")" >}TOKEN :{        < EQ : "=" >}TOKEN :{        < LT : "<" >}TOKEN :{        < GT : ">" >}TOKEN :{        < IFTHENELSE : "->" >}TOKEN :{        < DEF : ":=" >}TOKEN :{        < COMMA : "," >}SimpleNode Start() :{}{        < LCB > DeclarationSet() StatementSet() < RCB >        {                return jjtThis;        }}void Epsilon() :{}{        {}}void DeclarationSet() :{}{        Declaration() DeclarationSetPrime()}void DeclarationSetPrime() :{}{        Declaration() DeclarationSetPrime()|       Epsilon()}void Declaration() :{}{        < DECL_RESERVE > Vars() < SC >}void Vars() :{}{        < ID > VarsPrime()}void VarsPrime() :{}{        < COMMA > < ID > VarsPrime()|       Epsilon()}void StatementSet() :{}{        Statement() StatementSetPrime()}void StatementSetPrime() :{}{        < SC > Statement() StatementSetPrime()|       Epsilon()}void Statement() :{}{        < ID > < DEF > StatementPrime()}void StatementPrime() :{}{        Expression() StatementNext()}void StatementNext() :{}{        < LT > Expression() StatementNextPrime()|       < EQ > Expression() StatementNextPrime()|       < GT > Expression() StatementNextPrime()|       Epsilon()}void StatementNextPrime() :{}{        < IFTHENELSE > Expression() < C > Expression()|       Epsilon()}void Expression() :{}{        Term() A1()}void A1() :{}{        < PLUS > Term() A1()|       < MINUS > Term() A1()|       Epsilon()}void Term() :{}{        Factor() T1()}void T1() :{}{        < MULT > Factor() T1()|       Epsilon()}void Factor() :{}{        < ID >|       < NUM >|       < LB > Expression() < RB >}
