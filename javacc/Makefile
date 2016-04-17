@@ -36,3 +36,7 @@ build_dir:
 one: clean build_dir
 	$(ENV) && cd build && jjtree ../$(ONE_TREE) && \
 	javacc $(ONE_JJ) && javac *.java && java $(ONE) < ../$(ONE_IN)
+
+two: clean build_dir
+	$(ENV) && cd build && jjtree ../$(TWO_TREE) && \
+	javacc $(TWO_JJ) && javac *.java && java $(TWO) < ../$(TWO_IN)
