@@ -1,12 +1,26 @@
-Block -> { Declset Stmtset }
-Declset -> Declset Decl | Decl
-Decl -> int Vars ; | bool Vars ;
-Vars -> id | Vars , id
-Stmtset -> Stmt | Stmtset ; Stmt
-Stmt -> Assn
-Assn -> id := Arith | id := Comp | id := Cond
-Arith -> Term | Arith + Term | Arith - Term
-Term -> Factor | Term * Factor
-Factor -> id | num | ( Arith )
-Comp -> Arith = Arith | Arith > Arith | Arith < Arith
-Cond -> Comp -> Arith : Arith 
+Block ::= { DeclSet StmtSet }
+
+DeclSet ::= Decl DeclSetP
+DeclSetP ::= Decl DeclSetP | 𝜀
+
+Decl ::= int Vars ; | bool Vars ;
+Vars ::= id VarsP
+VarsP ::= , id VarsP | 𝜀
+
+StmtSet ::= Stmt StmtSetP
+StmtSetP ::= ; Stmt StmtSetP | 𝜀
+
+Stmt ::= id := StmtP
+StmtP ::= Arith StmtNext
+
+StmtNext ::= < A StmtNP | = A StmtNP | > A StmtNP | 𝜀
+
+StmtNP ::= -> A : A | 𝜀
+
+A ::= T A1
+A1 ::= + T A1 | - T A1 | 𝜀
+
+T ::= F T1
+T1 ::= * F T1 | 𝜀
+
+F ::= id | num | ( A )
