@@ -1,6 +1,6 @@
 ONE=TheGrammarLex
 TWO=TheGrammarParse
-THREE=TheGrammarAst
+THREE=TheGrammarAST
 FOUR=TheGrammarVisitor
 JJT=.jjt
 JJ=.jj
@@ -33,6 +33,9 @@ clean:
 build_dir:
 	mkdir -p build
 
+prep:
+	cp *.java build/
+
 one: clean build_dir
 	$(ENV) && cd build && jjtree ../$(ONE_TREE) && \
 	javacc $(ONE_JJ) && javac *.java && java $(ONE) < ../$(ONE_IN)
@@ -40,3 +43,7 @@ one: clean build_dir
 two: clean build_dir
 	$(ENV) && cd build && jjtree ../$(TWO_TREE) && \
 	javacc $(TWO_JJ) && javac *.java && java $(TWO) < ../$(TWO_IN)
+
+three: clean build_dir prep
+	$(ENV) && cd build && jjtree ../$(THREE_TREE) && \
+	javacc $(THREE_JJ) && javac *.java && java $(THREE) < ../$(THREE_IN)

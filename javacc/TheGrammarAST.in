@@ -1,0 +1,10 @@
+{
+int micky, donald;
+nintendo := 
+        (mario + luigi) < (peach * toad + ( bowser - donkey)) 
+        -> win : 0 ;
+jerry := 
+        tom * quacker * butch 
+        < mario * ( luigi - toad ) 
+        -> bowser : ( yoshi + 10 ) * 3 
+}
