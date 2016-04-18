@@ -1,10 +1,16 @@
 {
 int micky, donald;
+int tom,  dick; int harry ; bool george;
 nintendo := 
         (mario + luigi) < (peach * toad + ( bowser - donkey)) 
         -> win : 0 ;
 jerry := 
         tom * quacker * butch 
         < mario * ( luigi - toad ) 
-        -> bowser : ( yoshi + 10 ) * 3 
+        -> bowser : ( yoshi + 10 ) * 3
+;
+tom := 5 - 4 - 3;
+dick := (tom * 7) + 2;
+george := tom < dick;
+harry := tom < dick -> tom + 2 : tom - 2
 }

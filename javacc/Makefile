@@ -25,25 +25,18 @@ FOUR_IN=$(FOUR)$(IN)
 
 JAVA_COMPILE=javac *.java
 ENV=export PATH=$$PATH:$(abspath bin)
-	
+TARGET?=$(THREE)	
 
 clean:
-	cd build && rm -f *.java *.jj *.class *.mk *.mf *.jar
-
-build_dir:
-	mkdir -p build
+	mkdir -p build && cd build && rm -f *.java *.jj *.class *.m* *.jar
 
 prep:
 	cp *.java build/
 
-one: clean build_dir
-	$(ENV) && cd build && jjtree ../$(ONE_TREE) && \
-	javacc $(ONE_JJ) && javac *.java && java $(ONE) < ../$(ONE_IN)
+build: clean prep
+	$(ENV) && cd build && jjtree ../$(TARGET)$(JJT) && \
+	javacc $(TARGET)$(JJ) && $(JAVA_COMPILE)
 
-two: clean build_dir
-	$(ENV) && cd build && jjtree ../$(TWO_TREE) && \
-	javacc $(TWO_JJ) && javac *.java && java $(TWO) < ../$(TWO_IN)
-
-three: clean build_dir prep
-	$(ENV) && cd build && jjtree ../$(THREE_TREE) && \
-	javacc $(THREE_JJ) && javac *.java && java $(THREE) < ../$(THREE_IN)
+run: build
+	cd build && java $(TARGET) < ../$(TARGET)$(IN)
+	

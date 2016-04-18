@@ -194,16 +194,10 @@ void StatementSetPrime() :
 |       Epsilon()
 }
 
-void Statement() :
+void Statement() #Statement :
 {}
 {
-        Identifier() Assign() StatementPrime()
-}
-
-void Assign() #Assign :
-{}
-{
-        < DEF >
+        Identifier() < DEF > StatementPrime()
 }
 
 void StatementPrime() :
@@ -228,7 +222,7 @@ void StatementNextPrime() :
 |       Epsilon()
 }
 
-void Expression() #ArithmeticExpression :
+void Expression() #Arith :
 {}
 {
         Term() A1()
@@ -237,8 +231,8 @@ void Expression() #ArithmeticExpression :
 void A1() :
 {}
 {
-        < PLUS > Term() A1()
-|       < MINUS > Term() A1()
+        Plus() Term() A1()
+|       Minus() Term() A1()
 |       Epsilon()
 }
 
@@ -251,7 +245,7 @@ void Term() :
 void T1() :
 {}
 {
-        < MULT > Factor() T1()
+        Mult() Factor() T1()
 |       Epsilon()
 }
 
@@ -273,7 +267,29 @@ void Identifier() #Id :
 }
 
 void Numeric() #Num :
+{ Token t;}
+{
+        t = < NUM >
+        {
+                jjtThis.setValue(t.image);
+        }
+}
+
+
+void Plus() #Plus :
 {}
 {
-        < NUM >
+        < PLUS >
+}
+
+void Minus() #Minus :
+{}
+{
+        < MINUS >
+}
+
+void Mult() #Mult :
+{}
+{
+        < MULT >
 }
