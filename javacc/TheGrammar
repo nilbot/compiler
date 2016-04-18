@@ -11,7 +11,7 @@ StmtSet ::= Stmt StmtSetP
 StmtSetP ::= ; Stmt StmtSetP | 𝜀
 
 Stmt ::= id := StmtP
-StmtP ::= Arith StmtNext
+StmtP ::= A StmtNext
 
 StmtNext ::= < A StmtNP | = A StmtNP | > A StmtNP | 𝜀
 
