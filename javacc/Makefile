@@ -39,4 +39,3 @@ build: clean prep
 
 run: build
 	cd build && java $(TARGET) < ../$(TARGET)$(IN)
-	
