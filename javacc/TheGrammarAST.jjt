@@ -197,8 +197,15 @@ void StatementSetPrime() :
 void Statement() #Statement :
 {}
 {
-        Identifier() < DEF > StatementPrime()
+        Identifier() DEF() StatementPrime()
 }
+
+void DEF() #Def :
+{}
+{
+        < DEF >
+}
+
 
 void StatementPrime() :
 {}
@@ -209,17 +216,47 @@ void StatementPrime() :
 void StatementNext() :
 {}
 {
-        < LT > Expression() StatementNextPrime()
-|       < EQ > Expression() StatementNextPrime()
-|       < GT > Expression() StatementNextPrime()
+        Lt() Expression() StatementNextPrime()
+|       Eq() Expression() StatementNextPrime()
+|       Gt() Expression() StatementNextPrime()
 |       Epsilon()
+}
+
+void Lt() #Lt :
+{}
+{
+        < LT >
+}
+
+void Gt() #Gt :
+{}
+{
+        < GT >
+}
+
+void Eq() #Eq :
+{}
+{
+        < EQ >
 }
 
 void StatementNextPrime() :
 {}
 {
-        < IFTHENELSE > Expression() < C > Expression()
+        TernaryIf() Expression() TernaryElse() Expression()
 |       Epsilon()
+}
+
+void TernaryIf() #TernaryIf :
+{}
+{
+        < IFTHENELSE >
+}
+
+void TernaryElse() #TernaryElse :
+{}
+{
+        < C >
 }
 
 void Expression() #Arith :
