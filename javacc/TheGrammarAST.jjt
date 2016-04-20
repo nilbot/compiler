@@ -1,24 +1,20 @@
-options
-{
-        MULTI = true;
-        NODE_DEFAULT_VOID = true;
-}
+options{ MULTI = true; NODE_DEFAULT_VOID = true; NODE_PREFIX = ""; }
 
 PARSER_BEGIN(TheGrammarAST)
 /**
- * TheGrammarAST:
+ * TheGrammarAST: generate AST
  */
 public class TheGrammarAST
 {
         public static void main(String args [])
         {
                 System.out.println("reading from standard input...");
-                TheGrammarAST tg = new TheGrammarAST(System.in);
+                TheGrammarAST ast = new TheGrammarAST(System.in);
                 try
                 {
-                        ASTStart n = tg.Start();
+                        Block n = ast.Block();
                         n.dump("");
-                        System.out.println("Thank you.");
+                        System.out.println("Success.");
                 }
                 catch (Exception e)
                 {
@@ -31,110 +27,62 @@ public class TheGrammarAST
 
 PARSER_END(TheGrammarAST)
 
-SKIP :
+SKIP : /*** Ignore whitespaces ***/
 {
         " "
 |       "\t"
 |       "\n"
 |       "\r"
+|       "\f"
 }
 
-TOKEN :
+TOKEN : /*** declaration keywords ***/
 {
         < DECL_RESERVE :
-                < DECL_INT >
-        |       < DECL_BOOL >>
-|       < #DECL_INT : "int" >
-|       < #DECL_BOOL : "bool" >
+                < INT >
+        |       < BOOL >>
+|       < #INT : "int" >
+|       < #BOOL : "bool" >
 }
 
-TOKEN :
+TOKEN : /*** identifiers and numbers ***/
 {
-        < ID : (< ALPH >)+ >
-|       < #ALPH : [ "a"-"z", "A"-"Z" ] >
+        < ID : (< LETTER >)+ >
+|       < #LETTER : [ "a"-"z", "A"-"Z" ] >
+|       < NUM : (< DIGIT >)+ >
+|       < #DIGIT : [ "0"-"9" ] >
 }
 
-TOKEN :
-{
-        < NUM : ([ "0"-"9" ])+ >
-}
-
-TOKEN :
+TOKEN : /*** terminal punctuation ***/
 {
         < LCB : "{" >
-}
-
-TOKEN :
-{
+|
         < RCB : "}" >
-}
-
-TOKEN :
-{
+|
         < SC : ";" >
-}
-
-TOKEN :
-{
+|
         < C : ":" >
-}
-
-TOKEN :
-{
-        < PLUS : "+" >
-}
-
-TOKEN :
-{
-        < MINUS : "-" >
-}
-
-TOKEN :
-{
+|
         < MULT : "*" >
-}
-
-TOKEN :
-{
+|
         < LB : "(" >
-}
-
-TOKEN :
-{
+|
         < RB : ")" >
-}
-
-TOKEN :
-{
+|
         < EQ : "=" >
-}
-
-TOKEN :
-{
+|
         < LT : "<" >
-}
-
-TOKEN :
-{
+|
         < GT : ">" >
-}
-
-TOKEN :
-{
+|
         < IFTHENELSE : "->" >
-}
-
-TOKEN :
-{
+|
         < DEF : ":=" >
-}
-
-TOKEN :
-{
+|
         < COMMA : "," >
 }
 
-ASTStart Start() #Start :
+Block Block() #Block :
 {}
 {
         < LCB > DeclarationSet() StatementSet() < RCB >
@@ -259,34 +207,27 @@ void TernaryElse() #TernaryElse :
         < C >
 }
 
-void Expression() #Arith :
-{}
+void Expression() : {}
 {
-        Term() A1()
+        AddictiveExpression()
+}
+void AddictiveExpression() : {}
+{
+        (
+                MultiplicativeExpression()
+                ( ("+"|"-") MultiplicativeExpression() )*
+        ) #Add(>1)
 }
 
-void A1() :
-{}
+void MultiplicativeExpression() : {}
 {
-        Plus() Term() A1()
-|       Minus() Term() A1()
-|       Epsilon()
+        (
+                UnaryExpression()
+                ("*" UnaryExpression())*        
+        ) #Mult(>1)
 }
 
-void Term() :
-{}
-{
-        Factor() T1()
-}
-
-void T1() :
-{}
-{
-        Mult() Factor() T1()
-|       Epsilon()
-}
-
-void Factor() :
+void UnaryExpression() :
 {}
 {
         Identifier()
@@ -310,23 +251,4 @@ void Numeric() #Num :
         {
                 jjtThis.setValue(t.image);
         }
-}
-
-
-void Plus() #Plus :
-{}
-{
-        < PLUS >
-}
-
-void Minus() #Minus :
-{}
-{
-        < MINUS >
-}
-
-void Mult() #Mult :
-{}
-{
-        < MULT >
 }
