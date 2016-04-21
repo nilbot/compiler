@@ -9,8 +9,9 @@ jerry :=
         < mario * ( luigi - toad ) 
         -> bowser : ( yoshi + 10 ) * 3
 ;
-tom := 5 - 4 - 3 * 10 - 4;
 dick := (tom * 7) + 2;
 george := tom < dick;
-harry := tom < dick -> tom + 2 : tom - 2
+harry := tom < dick -> tom + 2 : tom - 2;
+tom := 5 - 4 - 3 * 10 + 3 * 4;
+tom := 7 + 3 - 4 * 1 * 2 * 3
 }
