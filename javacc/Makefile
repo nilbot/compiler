@@ -1,7 +1,7 @@
 ONE=TheGrammarLex
 TWO=TheGrammarParse
 THREE=TheGrammarAST
-FOUR=TheGrammarVisitor
+FOUR=TheGrandFinale
 JJT=.jjt
 JJ=.jj
 IN=.in
@@ -25,7 +25,7 @@ FOUR_IN=$(FOUR)$(IN)
 
 JAVA_COMPILE=javac *.java
 ENV=export PATH=$$PATH:$(abspath bin)
-TARGET?=$(THREE)
+TARGET?=$(FOUR)
 
 clean:
 	mkdir -p build && cd build && rm -f *.java *.jj *.class *.m* *.jar

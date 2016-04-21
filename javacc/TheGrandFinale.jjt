@@ -1,0 +1,308 @@
+options
+{
+        MULTI = true;
+        VISITOR = true;
+        NODE_DEFAULT_VOID = true;
+        NODE_PREFIX = "Visitor";
+}
+
+PARSER_BEGIN(TheGrandFinale)
+/**
+ * TheGrandFinale:
+ */
+public class TheGrandFinale
+{
+        public static void main(String args [])
+        {
+                System.out.println("reading from standard input...");
+                TheGrandFinale tg = new TheGrandFinale(System.in);
+                try
+                {
+                        VisitorBlock n = tg.Block();
+                        TheGrandFinaleVisitor v = new TheVisitingCompiler();
+                        n.jjtAccept(v,null);
+                        System.out.println("Thank you.");
+                }
+                catch (Exception e)
+                {
+                        System.out.println("Oops. ");
+                        System.out.println(e.getMessage());
+                        e.printStackTrace();
+                }
+        }
+}
+
+PARSER_END(TheGrandFinale)
+
+SKIP :
+{
+        " "
+|       "\t"
+|       "\n"
+|       "\r"
+}
+
+TOKEN :
+{
+        < DECL_INT : "int" >
+|       < DECL_BOOL : "bool" >
+}
+
+TOKEN :
+{
+        < ID : (< ALPH >)+ >
+|       < #ALPH : [ "a"-"z", "A"-"Z" ] >
+}
+
+TOKEN :
+{
+        < NUM : ([ "0"-"9" ])+ >
+}
+
+TOKEN :
+{
+        < LCB : "{" >
+}
+
+TOKEN :
+{
+        < RCB : "}" >
+}
+
+TOKEN :
+{
+        < SC : ";" >
+}
+
+TOKEN :
+{
+        < C : ":" >
+}
+
+TOKEN :
+{
+        < PLUS : "+" >
+}
+
+TOKEN :
+{
+        < MINUS : "-" >
+}
+
+TOKEN :
+{
+        < MULT : "*" >
+}
+
+TOKEN :
+{
+        < LB : "(" >
+}
+
+TOKEN :
+{
+        < RB : ")" >
+}
+
+TOKEN :
+{
+        < EQ : "=" >
+}
+
+TOKEN :
+{
+        < LT : "<" >
+}
+
+TOKEN :
+{
+        < GT : ">" >
+}
+
+TOKEN :
+{
+        < IFTHENELSE : "->" >
+}
+
+TOKEN :
+{
+        < DEF : ":=" >
+}
+
+TOKEN :
+{
+        < COMMA : "," >
+}
+
+VisitorBlock Block() #Block :
+{}
+{
+        < LCB > DeclarationSet() StatementSet() < RCB >
+        {
+                return jjtThis;
+        }
+}
+
+void DeclarationSet() :
+{}
+{
+        Declaration() DeclarationSetPrime()
+}
+
+void DeclarationSetPrime() :
+{}
+{
+        Declaration() DeclarationSetPrime()
+|       {}
+}
+
+void Declaration() :
+{}
+{
+        (< DECL_INT > Vars() < SC >)#IntDecl
+|       (< DECL_BOOL > Vars() < SC >)#BoolDecl
+}
+
+void Vars() :
+{}
+{
+        Identifier() VarsPrime()
+}
+
+void VarsPrime() :
+{}
+{
+        < COMMA > Identifier() VarsPrime()
+|       {}
+}
+
+void StatementSet() :
+{}
+{
+        Statement() StatementSetPrime()
+}
+
+void StatementSetPrime() :
+{}
+{
+        < SC > Statement() StatementSetPrime()
+|       {}
+}
+
+void Statement() :
+{}
+{
+        (Identifier() DEF() StatementPrime())#Assignment
+}
+
+void DEF() :
+{}
+{
+        < DEF >
+}
+
+
+void StatementPrime() :
+{}
+{
+        Expression() StatementNext()
+}
+
+void StatementNext() :
+{}
+{
+        (Lt() Expression() StatementNextPrime())#LtNext
+|       (Eq() Expression() StatementNextPrime())#EqNext
+|       (Gt() Expression() StatementNextPrime())#GtNext
+|       {}
+}
+
+void Lt() :
+{}
+{
+        < LT >
+}
+
+void Gt() :
+{}
+{
+        < GT >
+}
+
+void Eq() :
+{}
+{
+        < EQ >
+}
+
+void StatementNextPrime() #TernaryIfElse :
+{}
+{
+        TernaryIf() Expression() TernaryElse() Expression()
+|       {}
+}
+
+void TernaryIf() :
+{}
+{
+        < IFTHENELSE >
+}
+
+void TernaryElse() :
+{}
+{
+        < C >
+}
+
+void Expression() #A :
+{}
+{
+        Term() A1()
+}
+
+void A1() :
+{}
+{
+        (< PLUS > Term() A1())#Addition
+|       (< MINUS > Term() A1())#Subtraction
+|       {}
+}
+
+void Term() :
+{}
+{
+        Factor() T1()
+}
+
+void T1() :
+{}
+{
+        (< MULT > Factor() T1())#Multiplication
+|       {}
+}
+
+void Factor() :
+{}
+{
+        Identifier()
+|       Numeric()
+|       < LB > Expression() < RB >
+}
+
+void Identifier() #Id :
+{ Token t; }
+{
+        t = < ID >
+        {
+                jjtThis.setName(t.image);
+        }
+}
+
+void Numeric() #Num :
+{ Token t;}
+{
+        t = < NUM >
+        {
+                jjtThis.setValue(t.image);
+        }
+}
