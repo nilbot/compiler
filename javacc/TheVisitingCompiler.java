@@ -1,5 +1,3 @@
-import java.util.*;
-
 public class TheVisitingCompiler implements TheGrandFinaleVisitor {
         private int indent = 0;
         private String indentString() {
@@ -131,8 +129,4 @@ public class TheVisitingCompiler implements TheGrandFinaleVisitor {
                 --indent;
                 return data;
         }
-}
-
-class SecretSource {
-
 }
