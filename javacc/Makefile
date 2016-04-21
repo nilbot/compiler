@@ -34,7 +34,8 @@ prep:
 	cp *.java build/
 
 build: clean prep
-	$(ENV) && cd build && jjtree ../$(TARGET)$(JJT) && \
+	$(ENV) \
+	&& cd build && jjtree ../$(TARGET)$(JJT) && \
 	javacc $(TARGET)$(JJ) && $(JAVA_COMPILE)
 
 run: build
