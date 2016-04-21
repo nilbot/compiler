@@ -25,7 +25,7 @@ FOUR_IN=$(FOUR)$(IN)
 
 JAVA_COMPILE=javac *.java
 ENV=export PATH=$$PATH:$(abspath bin)
-TARGET?=$(THREE)	
+TARGET?=$(THREE)
 
 clean:
 	mkdir -p build && cd build && rm -f *.java *.jj *.class *.m* *.jar
