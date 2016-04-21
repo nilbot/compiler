@@ -50,22 +50,6 @@ public class TheVisitingCompiler implements TheGrandFinaleVisitor {
                 return data;
         }
 
-        public Object visit(VisitorId node, Object data) {
-                System.out.println(indentString() + node);
-                ++indent;
-                data = node.childrenAccept(this, data);
-                --indent;
-                return data;
-        }
-
-        public Object visit(VisitorNum node, Object data) {
-                System.out.println(indentString() + node);
-                ++indent;
-                data = node.childrenAccept(this, data);
-                --indent;
-                return data;
-        }
-
         public Object visit(VisitorA node, Object data) {
                 System.out.println(indentString() + node);
                 ++indent;
@@ -74,17 +58,11 @@ public class TheVisitingCompiler implements TheGrandFinaleVisitor {
                 return data;
         }
 
-        public Object visit(VisitorIntDecl node, Object data) {
+        // handles phase 0; I don't care what type it is.
+        public Object visit(VisitorDeclaration node, Object data) {
                 System.out.println(indentString() + node);
                 ++indent;
-                data = node.childrenAccept(this, data);
-                --indent;
-                return data;
-        }
-
-        public Object visit(VisitorBoolDecl node, Object data) {
-                System.out.println(indentString() + node);
-                ++indent;
+                ((SecretSource)data).state = 0; // ensure
                 data = node.childrenAccept(this, data);
                 --indent;
                 return data;
@@ -128,5 +106,55 @@ public class TheVisitingCompiler implements TheGrandFinaleVisitor {
                 data = node.childrenAccept(this, data);
                 --indent;
                 return data;
+        }
+        
+        ////////////////////////////////////////////////////////
+        //// ---- most important two handlers, i think ---- ////
+        ////////////////////////////////////////////////////////
+
+        public Object visit(VisitorId node, Object data) {
+                System.out.println(indentString() + node);
+
+                SecretSource src = (SecretSource)data;
+                String id = node.getName();
+                String var = src.getVarNameForId(id);
+                switch (src.state) {
+                        case 0:
+                                // do nothing
+                        break;
+                        case 1:
+                                // top() can only be assignment op
+                                src.push(var);
+                                src.state = 2;
+                        break;
+                        case 2:
+                                if (arithmeticOp(src.top())) {
+                                        String op = src.pop();
+                                        String src1 = src.pop();
+                                        
+                                        src.generateA(op,src1,var);
+                                } else {
+                                       src.push(var); 
+                                }
+                        break;
+                }
+
+
+                return data;
+        }
+
+        public Object visit(VisitorNum node, Object data) {
+                System.out.println(indentString() + node);
+                ++indent;
+                data = node.childrenAccept(this, data);
+                --indent;
+                return data;
+        }
+        
+        private boolean arithmeticOp(String op) {
+                if (op.equals("+")||op.equals("-")||op.equals("*")) {
+                        return true;
+                }
+                return false;
         }
 }

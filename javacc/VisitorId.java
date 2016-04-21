@@ -5,5 +5,6 @@ public class VisitorId extends SimpleNode {
                 return visitor.visit(this, data);
         }
         public void setName(String n) { name = n; }
+        public String getName() {return this.name;}
         public String toString() { return "Id: " + name; }
 }
