@@ -159,8 +159,7 @@ void DeclarationSetPrime() :
 void Declaration() :
 {}
 {
-        (< DECL_INT > Vars() < SC >)#IntDecl
-|       (< DECL_BOOL > Vars() < SC >)#BoolDecl
+        ((< DECL_INT > | < DECL_BOOL >) Vars() < SC >)#Declaration
 }
 
 void Vars() :
