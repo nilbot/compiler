@@ -211,11 +211,13 @@ void Expression() : {}
 {
         AddictiveExpression()
 }
-void AddictiveExpression() : {}
+void AddictiveExpression() : {Token t;}
 {
         (
                 MultiplicativeExpression()
-                ( ("+"|"-") MultiplicativeExpression() )*
+                ( t=< AdditiveOp: "+"|"-" > MultiplicativeExpression() {
+                        jjtThis.setOp(t.image);
+                })*
         ) #Add(>1)
 }
 
