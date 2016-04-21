@@ -22,7 +22,7 @@ public class TheVisitingCompiler implements TheGrandFinaleVisitor {
         public Object visit(VisitorBlock node, Object data) {
                 System.out.println(indentString() + node);
                 ++indent;
-                data = new SecretSource();
+                if (data == null) data = new SecretSource();
                 data = node.childrenAccept(this, data);
                 --indent;
                 return data;
