@@ -234,10 +234,10 @@ void Eq() :
         < EQ >
 }
 
-void StatementNextPrime() #TernaryIfElse :
+void StatementNextPrime() :
 {}
 {
-        TernaryIf() Expression() TernaryElse() Expression()
+        (TernaryIf() Expression() TernaryElse() Expression())#TernaryIfElse
 |       {}
 }
 

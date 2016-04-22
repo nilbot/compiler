@@ -2,7 +2,7 @@
 int micky, donald;
 int tom,  dick; int harry ; bool george;
 nintendo := 
-        (mario + luigi) < (peach * toad + ( bowser - donkey)) 
+        mario + luigi < (peach + toad * ( bowser - donkey)) 
         -> win : 0 ;
 jerry := 
         tom * quacker * butch 
