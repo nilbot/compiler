@@ -111,10 +111,6 @@ public class TheVisitingCompiler implements TheGrandFinaleVisitor {
                 ++indent;
                 data = node.childrenAccept(this, data);
                 --indent;
-                if (src.state != 5) {
-                        throw new IllegalStateException("child has not"+
-                        " advanced state");
-                }
                 return data;
         }
 
@@ -127,10 +123,6 @@ public class TheVisitingCompiler implements TheGrandFinaleVisitor {
                 ++indent;
                 data = node.childrenAccept(this, data);
                 --indent;
-                if (src.state != 5) {
-                        throw new IllegalStateException("child has not"+
-                        " advanced state");
-                }
                 return data;
         }
 
@@ -142,7 +134,7 @@ public class TheVisitingCompiler implements TheGrandFinaleVisitor {
                 ++indent;
                 data = node.childrenAccept(this, data);
                 --indent;
-                if (src.state == 3) {
+                if (src.state == 3) { // 2, 3, 5 are finishing states. just fyi
                         finishCmp(src);
                 }
                 src.genAssign();

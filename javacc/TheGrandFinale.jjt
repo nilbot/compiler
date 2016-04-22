@@ -20,8 +20,11 @@ public class TheGrandFinale
                 {
                         VisitorBlock n = tg.Block();
                         TheGrandFinaleVisitor v = new TheVisitingCompiler();
-                        n.jjtAccept(v,null);
+                        Object data = new SecretSource();
+                        n.jjtAccept(v,data);
                         System.out.println("Thank you.");
+                        System.out.println("---Immediate Code!---");
+                        System.out.println(((SecretSource)data).code);
                 }
                 catch (Exception e)
                 {

@@ -132,7 +132,12 @@ public class SecretSource {
                         " is not assignment operator");
                 }
                 Vector<String> line = new Vector<>();
-                code.add(load("t1",value));
+                try {
+                        int v = Integer.parseInt(value);
+                        code.add(loadi("t1",v));
+                } catch (NumberFormatException e) {
+                        code.add(load("t1",value));
+                }
                 code.add(load(dest,"t1"));
         }
         
